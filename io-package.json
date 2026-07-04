@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "metermaster",
-    "version": "0.7.6",
+    "version": "0.8.0",
     "news": {
+      "0.8.0": {
+        "en": "Charts per meter (Chart.js modal), consumption KPI, CSV export, DE/EN language switch, TotalWater/HeatMeter icons",
+        "de": "Charts pro Zaehler (Chart.js-Modal), Verbrauchs-KPI, CSV-Export, Sprachumschalter DE/EN, TotalWater/HeatMeter Icons"
+      },
       "0.7.5": {
         "en": "Bugfix: Emoji Surrogate-Pairs in TYPE_ICONS and copyCmd JS strings (SyntaxError in browser)",
         "de": "Bugfix: Emoji Surrogate-Pairs in TYPE_ICONS und copyCmd JS-Strings (SyntaxError im Browser)"

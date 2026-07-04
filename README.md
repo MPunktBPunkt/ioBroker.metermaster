@@ -92,7 +92,7 @@ http://{ioBroker-IP}:8089/
 
 | Tab | Inhalt |
 |---|---|
-| 📊 **Daten** | Alle empfangenen Zähler, gegliedert nach Haus/Wohnung, mit aufklappbarem Verlauf |
+| 📊 **Daten** | Alle empfangenen Zähler, gegliedert nach Haus/Wohnung, mit Verlauf, Chart-Modal und CSV-Export |
 | 📡 **Nodes** | Registrierte ESP32-Nodes: Status, IP-Link, FW-Version, Zähler-Dropdown, LED-Steuerung |
 | 📥 **Import** | App-Backup (JSON Schema 2.0) per Drag & Drop einspielen |
 | 📋 **Logs** | Echtzeit-Log mit Filter, Auto-Scroll, Export |
@@ -249,6 +249,13 @@ sed -n '9p' /opt/iobroker/node_modules/iobroker.metermaster/main.js
 ---
 
 ## Changelog
+
+### 0.8.0 (2026-07-04)
+- Chart-Modal pro Zähler (Chart.js): Zählerstand-Kurve + Monatsverbrauch-Balken
+- Verbrauchs-KPI auf jeder Zählerkarte (Δ seit letzter Ablesung)
+- CSV-Export pro Zähler (Karte + Chart-Modal)
+- Sprachumschalter DE/EN im Header (localStorage)
+- TYPE_ICONS: `TotalWater`, `HeatMeter`
 
 ### 0.7.6 (2026-03-13)
 - Login-Modal in der Web-UI – kein Browser-`prompt()` mehr für Auth

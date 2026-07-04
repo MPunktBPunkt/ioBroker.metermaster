@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const https  = require('https');
 const { exec } = require('child_process');
 
-const CURRENT_VERSION = '0.7.6';
+const CURRENT_VERSION = '0.8.0';
 const GITHUB_REPO     = 'MPunktBPunkt/iobroker.metermaster';
 const GITHUB_URL      = 'https://github.com/MPunktBPunkt/iobroker.metermaster';
 
@@ -880,7 +880,8 @@ const LOGO_SVG = `<svg viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg">
 // Typ-Icons nach typeName (spiegelt App-Icons wider)
 const TYPE_ICONS = {
   Electricity:'\u26A1', Gas:'\uD83D\uDD25', Water:'\uD83D\uDCA7', HotWater:'\uD83C\uDF21',
-  ColdWater:'\u2744', Heat:'\uD83C\uDFE0', Cooling:'\uD83E\uDDCA', Oil:'\uD83D\uDEE2', Other:'\uD83D\uDCDF'
+  TotalWater:'\uD83D\uDCA7', ColdWater:'\u2744', Heat:'\uD83C\uDFE0', HeatMeter:'\uD83C\uDFE0',
+  Cooling:'\uD83E\uDDCA', Oil:'\uD83D\uDEE2', Other:'\uD83D\uDCDF'
 };
 
 const html = `<!DOCTYPE html>
@@ -889,6 +890,7 @@ const html = `<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>MeterMaster</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 /* ── Exakte App-Farben aus Colors.xaml ───────────────────────────────────── */
 :root {
@@ -1022,6 +1024,72 @@ nav {
 }
 .hist-row:last-child { border: none; }
 .hist-val { color: var(--text); font-weight: 600; }
+.mc-consume {
+  font-size: .76em; color: var(--accent); margin-top: 6px;
+  display: flex; align-items: center; gap: 4px;
+}
+.mc-actions {
+  display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap;
+}
+.mc-chart-btn, .mc-csv-btn {
+  font-size: .76em; padding: 4px 10px; border-radius: 7px; cursor: pointer;
+  border: 1px solid var(--border-light); background: var(--bg-surface3);
+  color: var(--secondary); transition: border-color .15s, background .15s;
+}
+.mc-chart-btn:hover, .mc-csv-btn:hover {
+  border-color: var(--primary); background: var(--primary-deep);
+}
+.lang-select {
+  background: var(--bg-surface2); border: 1px solid var(--border-light);
+  color: var(--text-dim); padding: 3px 8px; border-radius: 6px;
+  font-size: .75em; font-weight: 600; cursor: pointer; outline: none;
+}
+.lang-select:hover { border-color: var(--primary); color: var(--text); }
+
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(15,11,26,.88);
+  z-index: 9998; display: none; align-items: center; justify-content: center;
+  padding: 16px;
+}
+.chart-modal {
+  background: var(--bg-surface); border: 1px solid var(--border-light);
+  border-radius: 16px; padding: 22px 24px; width: 100%; max-width: 820px;
+  max-height: 92vh; overflow-y: auto;
+}
+.chart-modal-head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 12px; margin-bottom: 14px;
+}
+.chart-modal-title { font-size: 1.05em; font-weight: 700; color: var(--secondary); }
+.chart-modal-sub   { font-size: .78em; color: var(--text-dim); margin-top: 3px; }
+.chart-close {
+  background: none; border: none; color: var(--text-dim); font-size: 1.6em;
+  cursor: pointer; line-height: 1; padding: 0 4px;
+}
+.chart-close:hover { color: var(--text); }
+.chart-range-btns { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.chart-range {
+  background: var(--bg-surface2); border: 1px solid var(--border);
+  color: var(--text-dim); padding: 4px 12px; border-radius: 7px;
+  cursor: pointer; font-size: .78em; font-weight: 600;
+}
+.chart-range.active, .chart-range:hover {
+  border-color: var(--primary); color: var(--secondary); background: var(--primary-deep);
+}
+.chart-kpi {
+  font-size: .82em; color: var(--accent); margin-bottom: 12px;
+  padding: 8px 12px; background: rgba(76,175,80,.08);
+  border-radius: 8px; border: 1px solid rgba(76,175,80,.2);
+}
+.chart-wrap-box {
+  background: var(--bg-deep); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px; margin-bottom: 12px; position: relative; height: 260px;
+}
+.chart-wrap-box.chart-wrap-sm { height: 200px; }
+.chart-modal-foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+.chart-no-data {
+  text-align: center; padding: 40px 16px; color: var(--text-dim); font-size: .88em;
+}
 
 .empty-state { text-align: center; padding: 70px 20px; color: var(--text-dim); }
 .empty-state .ico { font-size: 3em; margin-bottom: 14px; }
@@ -1207,10 +1275,14 @@ input.search {
     <span class="logo-sub">ioBroker Adapter &nbsp;<span style="color:var(--primary);font-size:.95em;letter-spacing:.5px">v${CURRENT_VERSION}</span></span>
   </div>
   <div class="hstats">
-    <div class="hstat">Ablesungen: <b id="st-rx">–</b></div>
-    <div class="hstat">Nodes: <b id="st-nodes">–</b></div>
-    <div class="hstat">Uptime: <b id="st-up">–</b></div>
+    <div class="hstat"><span id="lbl-rx">Ablesungen</span>: <b id="st-rx">–</b></div>
+    <div class="hstat"><span id="lbl-nodes">Nodes</span>: <b id="st-nodes">–</b></div>
+    <div class="hstat"><span id="lbl-up">Uptime</span>: <b id="st-up">–</b></div>
     <div class="live-dot" id="st-live">● Live</div>
+    <select class="lang-select" id="lang-select" title="Language">
+      <option value="de">DE</option>
+      <option value="en">EN</option>
+    </select>
   </div>
 </header>
 
@@ -1432,7 +1504,268 @@ async function authFetch(url, opts) {
   return r;
 }
 
-const TYPE_ICONS = {Electricity:'\u26A1',Gas:'\uD83D\uDD25',Water:'\uD83D\uDCA7',HotWater:'\uD83C\uDF21',ColdWater:'\u2744',Heat:'\uD83C\uDFE0',Cooling:'\uD83E\uDDCA',Oil:'\uD83D\uDEE2',Other:'\uD83D\uDCDF'};
+const TYPE_ICONS = {
+  Electricity:'\u26A1', Gas:'\uD83D\uDD25', Water:'\uD83D\uDCA7', HotWater:'\uD83C\uDF21',
+  TotalWater:'\uD83D\uDCA7', ColdWater:'\u2744', Heat:'\uD83C\uDFE0', HeatMeter:'\uD83C\uDFE0',
+  Cooling:'\uD83E\uDDCA', Oil:'\uD83D\uDEE2', Other:'\uD83D\uDCDF'
+};
+
+const I18N = {
+  de: {
+    readings:'Ablesungen', nodes:'Nodes', uptime:'Uptime', live:'Live', disconnected:'Getrennt',
+    tab_data:'Daten', tab_nodes:'Nodes', tab_import:'Import', tab_logs:'Logs', tab_system:'System',
+    no_data:'Noch keine Ablesungen empfangen.<br>Starte einen Sync in der MeterMaster App oder lade ein Backup hoch.',
+    history:'Verlauf', since_last:'seit letzter Ablesung', days:'Tage', chart_btn:'Chart', csv_btn:'CSV',
+    chart_readings:'Z\u00E4hlerstand', chart_monthly:'Monatsverbrauch', chart_period_all:'Alles',
+    chart_no_data:'Zu wenig Daten f\u00FCr eine Grafik (mind. 2 Ablesungen n\u00F6tig).',
+    chart_close:'Schlie\u00DFen', error:'Fehler', consume:'Verbrauch',
+    ago_just:'gerade eben', ago_sec:'vor {s}s', ago_min:'vor {m}min'
+  },
+  en: {
+    readings:'Readings', nodes:'Nodes', uptime:'Uptime', live:'Live', disconnected:'Disconnected',
+    tab_data:'Data', tab_nodes:'Nodes', tab_import:'Import', tab_logs:'Logs', tab_system:'System',
+    no_data:'No readings received yet.<br>Start a sync in the MeterMaster app or upload a backup.',
+    history:'History', since_last:'since last reading', days:'days', chart_btn:'Chart', csv_btn:'CSV',
+    chart_readings:'Meter reading', chart_monthly:'Monthly consumption', chart_period_all:'All',
+    chart_no_data:'Not enough data for a chart (at least 2 readings required).',
+    chart_close:'Close', error:'Error', consume:'Consumption',
+    ago_just:'just now', ago_sec:'{s}s ago', ago_min:'{m}min ago'
+  }
+};
+
+let currentLang = 'de';
+try {
+  const saved = localStorage.getItem('mm-lang');
+  currentLang = saved || (navigator.language && navigator.language.startsWith('de') ? 'de' : 'en');
+} catch { currentLang = 'de'; }
+
+function t(key, vars) {
+  let s = (I18N[currentLang] && I18N[currentLang][key]) || (I18N.de[key]) || key;
+  if (vars) Object.keys(vars).forEach(k => { s = s.replace('{'+k+'}', vars[k]); });
+  return s;
+}
+function localeTag() { return currentLang === 'de' ? 'de-DE' : 'en-GB'; }
+
+function applyI18n() {
+  document.documentElement.lang = currentLang;
+  const ls = document.getElementById('lang-select');
+  if (ls) ls.value = currentLang;
+  const set = (id, key) => { const el = document.getElementById(id); if (el) el.textContent = t(key); };
+  set('lbl-rx', 'readings');
+  set('lbl-nodes', 'nodes');
+  set('lbl-up', 'uptime');
+  const tabs = { 'tab-data':'tab_data', 'tab-nodes':'tab_nodes', 'tab-import':'tab_import', 'tab-logs':'tab_logs', 'tab-system':'tab_system' };
+  Object.keys(tabs).forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const icons = { 'tab-data':'\uD83D\uDCCA ', 'tab-nodes':'\uD83D\uDCE1 ', 'tab-import':'\uD83D\uDCE5 ', 'tab-logs':'\uD83D\uDCCB ', 'tab-system':'\u2699\uFE0F ' };
+    el.textContent = (icons[id] || '') + t(tabs[id]);
+  });
+  const crAll = document.querySelector('.chart-range[data-months="0"]');
+  if (crAll) crAll.textContent = t('chart_period_all');
+  const csvBtn = document.getElementById('chart-csv-btn');
+  if (csvBtn) csvBtn.textContent = '\u2B07 ' + t('csv_btn');
+  const cc = document.getElementById('chart-close');
+  if (cc) cc.title = t('chart_close');
+}
+
+function setLang(lang) {
+  if (!I18N[lang]) return;
+  currentLang = lang;
+  try { localStorage.setItem('mm-lang', lang); } catch {}
+  applyI18n();
+  fetchData();
+  fetchStats();
+}
+
+let dataCacheList = [];
+let chartCtxIdx = -1;
+let chartRangeMonths = 0;
+let chartInstLine = null;
+let chartInstBar = null;
+
+function calcDelta(history) {
+  if (!history || history.length < 2) return null;
+  const sorted = history.slice().sort((a, b) => a.ts - b.ts);
+  const prev = sorted[sorted.length - 2];
+  const last = sorted[sorted.length - 1];
+  const delta = last.value - prev.value;
+  if (delta < 0) return null;
+  const days = Math.max(1, Math.round((last.ts - prev.ts) / 86400000));
+  return { delta, days, prev, last };
+}
+
+function calcMonthlyConsumption(history) {
+  const sorted = history.slice().sort((a, b) => a.ts - b.ts);
+  const months = {};
+  for (let i = 1; i < sorted.length; i++) {
+    const delta = sorted[i].value - sorted[i - 1].value;
+    if (delta < 0) continue;
+    const d = new Date(sorted[i].ts);
+    const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    months[key] = (months[key] || 0) + delta;
+  }
+  return months;
+}
+
+function filterHistoryByMonths(history, months) {
+  if (!months || months <= 0) return history.slice();
+  const cutoff = Date.now() - months * 30 * 86400000;
+  return history.filter(h => h.ts >= cutoff);
+}
+
+function fmtNum(n) {
+  if (n === undefined || n === null || isNaN(n)) return '\u2013';
+  return Number(n).toLocaleString(localeTag(), { maximumFractionDigits: 3 });
+}
+
+function exportMeterCsv(idx) {
+  const m = dataCacheList[idx];
+  if (!m) return;
+  const hist = (m.history || []).slice().sort((a, b) => a.ts - b.ts);
+  const sep = currentLang === 'de' ? ';' : ',';
+  const hdr = currentLang === 'de'
+    ? ['Datum', 'Wert', 'Einheit', 'Verbrauch'].join(sep)
+    : ['Date', 'Value', 'Unit', 'Consumption'].join(sep);
+  let rows = [hdr];
+  for (let i = 0; i < hist.length; i++) {
+    const cons = (i > 0 && hist[i].value >= hist[i - 1].value) ? (hist[i].value - hist[i - 1].value) : '';
+    rows.push([
+      new Date(hist[i].ts).toISOString(),
+      hist[i].value,
+      m.unit || '',
+      cons
+    ].join(sep));
+  }
+  const blob = new Blob(['\uFEFF' + rows.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (m.house + '_' + m.apartment + '_' + m.meter + '.csv').replace(/[^a-zA-Z0-9_.\-]/g, '_');
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function destroyCharts() {
+  if (chartInstLine) { chartInstLine.destroy(); chartInstLine = null; }
+  if (chartInstBar)  { chartInstBar.destroy();  chartInstBar = null; }
+}
+
+function initChartTheme() {
+  if (typeof Chart === 'undefined') return;
+  Chart.defaults.color = '#9585BB';
+  Chart.defaults.borderColor = 'rgba(42,32,80,.8)';
+  Chart.defaults.font.family = "'Segoe UI',system-ui,sans-serif";
+  Chart.defaults.font.size = 11;
+  Chart.defaults.plugins.legend.display = true;
+  Chart.defaults.plugins.legend.labels.boxWidth = 12;
+  Chart.defaults.elements.point.radius = 3;
+  Chart.defaults.elements.point.hoverRadius = 5;
+  Chart.defaults.elements.line.borderWidth = 2;
+  Chart.defaults.elements.line.tension = 0.2;
+}
+
+function renderMeterCharts() {
+  destroyCharts();
+  const m = dataCacheList[chartCtxIdx];
+  const overlay = document.getElementById('chart-overlay');
+  const kpiEl = document.getElementById('chart-kpi');
+  if (!m || !overlay) return;
+
+  const allHist = (m.history || []).slice().sort((a, b) => a.ts - b.ts);
+  const hist = filterHistoryByMonths(allHist, chartRangeMonths);
+
+  if (typeof Chart === 'undefined') {
+    kpiEl.style.display = 'block';
+    kpiEl.textContent = 'Chart.js not loaded';
+    return;
+  }
+  initChartTheme();
+
+  const delta = calcDelta(allHist);
+  if (delta) {
+    kpiEl.style.display = 'block';
+    kpiEl.textContent = '\uD83D\uDCCA +' + fmtNum(delta.delta) + ' ' + (m.unit || '') +
+      ' ' + t('since_last') + ' (' + delta.days + ' ' + t('days') + ')';
+  } else {
+    kpiEl.style.display = 'none';
+  }
+
+  if (hist.length < 2) {
+    destroyCharts();
+    return;
+  }
+
+  const labels = hist.map(h => fmtDt(h.ts));
+  const values = hist.map(h => h.value);
+  const unit = m.unit || '';
+
+  chartInstLine = new Chart(document.getElementById('chart-line'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: t('chart_readings') + (unit ? ' (' + unit + ')' : ''),
+        data: values,
+        borderColor: '#7B54C4',
+        backgroundColor: 'rgba(123,84,196,.15)',
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#C8B8FF' } } },
+      scales: {
+        x: { ticks: { maxTicksLimit: 8, color: '#9585BB' }, grid: { color: 'rgba(42,32,80,.5)' } },
+        y: { ticks: { color: '#9585BB' }, grid: { color: 'rgba(42,32,80,.5)' } }
+      }
+    }
+  });
+
+  const monthly = calcMonthlyConsumption(hist);
+  const monthKeys = Object.keys(monthly).sort();
+  chartInstBar = new Chart(document.getElementById('chart-bar'), {
+    type: 'bar',
+    data: {
+      labels: monthKeys,
+      datasets: [{
+        label: t('chart_monthly') + (unit ? ' (' + unit + ')' : ''),
+        data: monthKeys.map(k => monthly[k]),
+        backgroundColor: 'rgba(76,175,80,.55)',
+        borderColor: '#4CAF50',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#C8B8FF' } } },
+      scales: {
+        x: { ticks: { color: '#9585BB' }, grid: { display: false } },
+        y: { ticks: { color: '#9585BB' }, grid: { color: 'rgba(42,32,80,.5)' } }
+      }
+    }
+  });
+}
+
+function openChartModal(idx) {
+  const m = dataCacheList[idx];
+  if (!m) return;
+  chartCtxIdx = idx;
+  chartRangeMonths = 0;
+  document.querySelectorAll('.chart-range').forEach(b => {
+    b.classList.toggle('active', b.dataset.months === '0');
+  });
+  document.getElementById('chart-title').textContent = m.meter;
+  document.getElementById('chart-sub').textContent = m.house + ' \u203A ' + m.apartment +
+    (m.typeName ? ' \u00B7 ' + m.typeName : '');
+  document.getElementById('chart-overlay').style.display = 'flex';
+  renderMeterCharts();
+}
+
+function closeChartModal() {
+  document.getElementById('chart-overlay').style.display = 'none';
+  destroyCharts();
+  chartCtxIdx = -1;
+}
 
 // \u2500\u2500 Tab-Navigation \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 window.showTab = function showTab(name) {
@@ -1447,19 +1780,19 @@ window.showTab = function showTab(name) {
 }
 
 const esc    = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-const fmtDt  = ts => new Date(ts).toLocaleString('de-DE',{hour12:false});
+const fmtDt  = ts => new Date(ts).toLocaleString(localeTag(),{hour12:false});
 const fmtUp  = s  => Math.floor(s/3600)+'h '+Math.floor(s%3600/60)+'m '+Math.floor(s%60)+'s';
 const fmtLog = ts => {
   const d = new Date(ts);
-  return d.toLocaleTimeString('de-DE',{hour12:false})+'.'+String(d.getMilliseconds()).padStart(3,'0');
+  return d.toLocaleTimeString(localeTag(),{hour12:false})+'.'+String(d.getMilliseconds()).padStart(3,'0');
 };
 const fmtAgo = ts => {
   if (!ts) return '\u2013';
   const s = Math.floor((Date.now()-ts)/1000);
-  if (s < 5)    return 'gerade eben';
-  if (s < 60)   return 'vor '+s+'s';
-  if (s < 3600) return 'vor '+Math.floor(s/60)+'min';
-  return new Date(ts).toLocaleString('de-DE',{hour12:false});
+  if (s < 5)    return t('ago_just');
+  if (s < 60)   return t('ago_sec', { s: String(s) });
+  if (s < 3600) return t('ago_min', { m: String(Math.floor(s/60)) });
+  return new Date(ts).toLocaleString(localeTag(),{hour12:false});
 };
 
 // \u2500\u2500 Stats \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
@@ -1469,10 +1802,10 @@ async function fetchStats() {
     document.getElementById('st-rx').textContent    = d.readingsReceived;
     document.getElementById('st-nodes').textContent = d.onlineCount+'/'+d.nodeCount;
     document.getElementById('st-up').textContent    = fmtUp(d.uptime);
-    document.getElementById('st-live').textContent  = '\u25CF Live';
+    document.getElementById('st-live').textContent  = '\u25CF ' + t('live');
     document.getElementById('st-live').style.color  = 'var(--accent)';
   } catch {
-    document.getElementById('st-live').textContent = '\u2717 Getrennt';
+    document.getElementById('st-live').textContent = '\u2717 ' + t('disconnected');
     document.getElementById('st-live').style.color = 'var(--danger)';
   }
 }
@@ -1492,21 +1825,36 @@ async function fetchData() {
   try {
     const d   = await fetch('/api/data').then(r => r.json());
     const con = document.getElementById('data-container');
+    dataCacheList = [];
     if (!d.data || !Object.keys(d.data).length) {
-      con.innerHTML = '<div class="empty-state"><div class="ico">\uD83D\uDCE1</div><p>Noch keine Ablesungen empfangen.<br>Starte einen Sync in der MeterMaster App.</p></div>';
+      con.innerHTML = '<div class="empty-state"><div class="ico">\uD83D\uDCE1</div><p>' + t('no_data') + '</p></div>';
       return;
     }
     let html = '';
+    let idx = 0;
     for (const [house, apts] of Object.entries(d.data)) {
       html += '<div class="house-block"><div class="house-title">\uD83C\uDFE0 '+esc(house)+'</div>';
       for (const [apt, meters] of Object.entries(apts)) {
         html += '<div class="apt-block"><div class="apt-title">\uD83C\uDFD8 '+esc(apt)+'</div><div class="meters-grid">';
         for (const [key, m] of Object.entries(meters)) {
+          const cacheIdx = idx++;
+          dataCacheList.push({ house, apartment: apt, meter: key, unit: m.unit, typeName: m.typeName, latest: m.latest, latestDate: m.latestDate, history: m.history || [] });
           const icon   = TYPE_ICONS[m.typeName] || '\uD83D\uDCDF';
           const histId = 'h-'+CSS.escape(house+apt+key);
-          const rows   = (m.history||[]).slice().reverse().map(h =>
+          const hist   = m.history || [];
+          const delta  = calcDelta(hist);
+          const rows   = hist.slice().reverse().map(h =>
             '<div class="hist-row"><span>'+esc(fmtDt(h.ts))+'</span><span class="hist-val">'+h.value+' '+esc(m.unit||'')+'</span></div>'
           ).join('');
+          const consumeHtml = delta
+            ? '<div class="mc-consume">\uD83D\uDCCA +'+fmtNum(delta.delta)+' '+esc(m.unit||'')+' '+t('since_last')+' ('+delta.days+' '+t('days')+')</div>'
+            : '';
+          const actionsHtml = hist.length >= 1
+            ? '<div class="mc-actions">'+
+                (hist.length >= 2 ? '<button class="mc-chart-btn" data-idx="'+cacheIdx+'" title="'+esc(t('chart_btn'))+'">\uD83D\uDCC8 '+esc(t('chart_btn'))+'</button>' : '')+
+                '<button class="mc-csv-btn" data-idx="'+cacheIdx+'" title="'+esc(t('csv_btn'))+'">\u2B07 '+esc(t('csv_btn'))+'</button>'+
+              '</div>'
+            : '';
           html +=
             '<div class="meter-card">'+
               '<div class="mc-head">'+
@@ -1518,10 +1866,12 @@ async function fetchData() {
                 '<span class="mc-unit">'+esc(m.unit||'')+'</span>'+
               '</div>'+
               '<div class="mc-date">\uD83D\uDCC5 '+esc(m.latestDate ? fmtDt(new Date(m.latestDate).getTime()) : '\u2013')+'</div>'+
+              consumeHtml+
               (rows
-                ? '<button class="mc-hist-toggle" data-hist="'+histId+'">\uD83D\uDCC8 Verlauf ('+(m.history||[]).length+')</button>'+
+                ? '<button class="mc-hist-toggle" data-hist="'+histId+'">\uD83D\uDCC8 '+t('history')+' ('+hist.length+')</button>'+
                   '<div class="mc-history" id="'+histId+'">'+rows+'</div>'
                 : '')+
+              actionsHtml+
             '</div>';
         }
         html += '</div></div>';
@@ -1531,7 +1881,7 @@ async function fetchData() {
     con.innerHTML = html;
   } catch(e) {
     document.getElementById('data-container').innerHTML =
-      '<div class="empty-state"><div class="ico">\u26A0</div><p>Fehler: '+esc(e.message)+'</p></div>';
+      '<div class="empty-state"><div class="ico">\u26A0</div><p>'+t('error')+': '+esc(e.message)+'</p></div>';
   }
 }
 
@@ -1895,6 +2245,37 @@ function initTabs() {
     if (btn && btn.dataset.hist) toggleHist(btn.dataset.hist);
   });
 
+  // Chart + CSV via Event Delegation
+  document.addEventListener('click', e => {
+    const chartBtn = e.target.closest('.mc-chart-btn');
+    if (chartBtn) { openChartModal(parseInt(chartBtn.dataset.idx, 10)); return; }
+    const csvBtn = e.target.closest('.mc-csv-btn');
+    if (csvBtn) { exportMeterCsv(parseInt(csvBtn.dataset.idx, 10)); return; }
+  });
+
+  // Chart-Modal
+  const chartClose = document.getElementById('chart-close');
+  if (chartClose) chartClose.addEventListener('click', closeChartModal);
+  const chartOverlay = document.getElementById('chart-overlay');
+  if (chartOverlay) chartOverlay.addEventListener('click', e => { if (e.target === chartOverlay) closeChartModal(); });
+  const chartCsvBtn = document.getElementById('chart-csv-btn');
+  if (chartCsvBtn) chartCsvBtn.addEventListener('click', () => { if (chartCtxIdx >= 0) exportMeterCsv(chartCtxIdx); });
+  document.querySelectorAll('.chart-range').forEach(btn => {
+    btn.addEventListener('click', () => {
+      chartRangeMonths = parseInt(btn.dataset.months, 10) || 0;
+      document.querySelectorAll('.chart-range').forEach(b => b.classList.toggle('active', b === btn));
+      renderMeterCharts();
+    });
+  });
+
+  // Sprache
+  const langSel = document.getElementById('lang-select');
+  if (langSel) langSel.addEventListener('change', e => setLang(e.target.value));
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeChartModal();
+  });
+
   // Nodes-Speichern via Event Delegation (kein onclick-Attribut mit Escaping-Problemen)
   document.addEventListener('click', e => {
     const btn2 = e.target.closest('[id^="sbtn-"]');
@@ -1931,6 +2312,7 @@ function initTabs() {
 
 async function init() {
   initTabs();
+  applyI18n();
   try {
     const d = await fetch('/api/logs?limit=500').then(r => r.json());
     if (d.entries.length > 0) {
@@ -1945,6 +2327,30 @@ async function init() {
 }
 init();
 </script>
+<!-- ══ CHART-MODAL ═══════════════════════════════════════════════════════════ -->
+<div id="chart-overlay" class="modal-overlay">
+  <div class="chart-modal">
+    <div class="chart-modal-head">
+      <div>
+        <div class="chart-modal-title" id="chart-title">–</div>
+        <div class="chart-modal-sub" id="chart-sub"></div>
+      </div>
+      <button class="chart-close" id="chart-close" title="Close">&times;</button>
+    </div>
+    <div class="chart-range-btns">
+      <button class="chart-range" data-months="3">3M</button>
+      <button class="chart-range" data-months="6">6M</button>
+      <button class="chart-range" data-months="12">12M</button>
+      <button class="chart-range active" data-months="0">All</button>
+    </div>
+    <div class="chart-kpi" id="chart-kpi" style="display:none"></div>
+    <div class="chart-wrap-box"><canvas id="chart-line"></canvas></div>
+    <div class="chart-wrap-box chart-wrap-sm"><canvas id="chart-bar"></canvas></div>
+    <div class="chart-modal-foot">
+      <button class="ghost" id="chart-csv-btn">⬇ CSV</button>
+    </div>
+  </div>
+</div>
 <!-- ══ LOGIN-MODAL ═══════════════════════════════════════════════════════════ -->
 <div id="login-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,11,26,.85);z-index:9999;align-items:center;justify-content:center;">
   <div style="background:var(--bg-surface);border:1px solid var(--border-light);border-radius:16px;padding:32px 36px;min-width:320px;max-width:420px;width:90%;">
