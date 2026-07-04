@@ -1742,17 +1742,16 @@ function renderMeterCharts() {
     return;
   }
 
-  const labels = hist.map(h => fmtDt(h.ts));
-  const values = hist.map(h => h.value);
+  const lineData = hist.map(h => ({ x: h.ts, y: h.value }));
   const unit = m.unit || '';
+  const readingLabel = t('chart_readings') + (unit ? ' (' + unit + ')' : '');
 
   chartInstLine = new Chart(document.getElementById('chart-line'), {
     type: 'line',
     data: {
-      labels,
       datasets: [{
-        label: t('chart_readings') + (unit ? ' (' + unit + ')' : ''),
-        data: values,
+        label: readingLabel,
+        data: lineData,
         borderColor: '#7B54C4',
         backgroundColor: 'rgba(123,84,196,.15)',
         fill: true
@@ -1760,9 +1759,26 @@ function renderMeterCharts() {
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { labels: { color: '#C8B8FF' } } },
+      plugins: {
+        legend: { labels: { color: '#C8B8FF' } },
+        tooltip: {
+          callbacks: {
+            title: items => (items.length ? fmtDt(items[0].parsed.x) : ''),
+            label: item => readingLabel + ': ' + fmtNum(item.parsed.y)
+          }
+        }
+      },
       scales: {
-        x: { ticks: { maxTicksLimit: 8, color: '#9585BB' }, grid: { color: 'rgba(42,32,80,.5)' } },
+        x: {
+          type: 'linear',
+          ticks: {
+            maxTicksLimit: 8,
+            maxRotation: 45,
+            color: '#9585BB',
+            callback: val => fmtDt(val)
+          },
+          grid: { color: 'rgba(42,32,80,.5)' }
+        },
         y: { ticks: { color: '#9585BB' }, grid: { color: 'rgba(42,32,80,.5)' } }
       }
     }
