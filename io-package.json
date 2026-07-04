@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "metermaster",
-    "version": "0.8.0",
+    "version": "0.8.1",
     "news": {
+      "0.8.1": {
+        "en": "Bugfix: literal newline in CSV export JS broke entire Web-UI (SyntaxError)",
+        "de": "Bugfix: Literal-Zeilenumbruch im CSV-Export-JS brach gesamte Web-UI (SyntaxError)"
+      },
       "0.8.0": {
         "en": "Charts per meter (Chart.js modal), consumption KPI, CSV export, DE/EN language switch, TotalWater/HeatMeter icons",
         "de": "Charts pro Zaehler (Chart.js-Modal), Verbrauchs-KPI, CSV-Export, Sprachumschalter DE/EN, TotalWater/HeatMeter Icons"

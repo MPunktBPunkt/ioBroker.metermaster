@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const https  = require('https');
 const { exec } = require('child_process');
 
-const CURRENT_VERSION = '0.8.0';
+const CURRENT_VERSION = '0.8.1';
 const GITHUB_REPO     = 'MPunktBPunkt/iobroker.metermaster';
 const GITHUB_URL      = 'https://github.com/MPunktBPunkt/iobroker.metermaster';
 
@@ -1636,7 +1636,7 @@ function exportMeterCsv(idx) {
       cons
     ].join(sep));
   }
-  const blob = new Blob(['\uFEFF' + rows.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const blob = new Blob(['\\uFEFF' + rows.join(String.fromCharCode(10))], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = (m.house + '_' + m.apartment + '_' + m.meter + '.csv').replace(/[^a-zA-Z0-9_.\-]/g, '_');
@@ -2125,7 +2125,7 @@ function applyLogFilter() {
 window.exportLogs = function exportLogs() {
   const f = gf();
   const txt = displayed.filter(e=>matchLog(e,f))
-    .map(e=>'['+new Date(e.ts).toISOString()+'] ['+e.level.toUpperCase()+'] ['+e.category+'] '+e.message+(e.detail?' \u2014 '+e.detail:'')).join('\\n');
+    .map(e=>'['+new Date(e.ts).toISOString()+'] ['+e.level.toUpperCase()+'] ['+e.category+'] '+e.message+(e.detail?' \\u2014 '+e.detail:'')).join(String.fromCharCode(10));
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([txt],{type:'text/plain'}));
   a.download = 'metermaster-log-'+new Date().toISOString().slice(0,19)+'.txt';
