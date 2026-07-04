@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "metermaster",
-    "version": "0.8.1",
+    "version": "0.8.2",
     "news": {
+      "0.8.2": {
+        "en": "Bugfix: chart modal close button and range filters (modals moved before script init)",
+        "de": "Bugfix: Chart-Modal X-Schliessen und Zeitraum-Buttons (Modals vor Script-Init)"
+      },
       "0.8.1": {
         "en": "Bugfix: literal newline in CSV export JS broke entire Web-UI (SyntaxError)",
         "de": "Bugfix: Literal-Zeilenumbruch im CSV-Export-JS brach gesamte Web-UI (SyntaxError)"
