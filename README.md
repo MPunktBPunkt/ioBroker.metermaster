@@ -26,6 +26,21 @@ Empfängt Zählerablesungen von der **[MeterMaster Android-App](https://github.c
 
 ---
 
+## Screenshots
+
+Die eingebaute Web-UI bietet fünf Tabs — hier ein Überblick:
+
+| | |
+|---|---|
+| **📊 Daten** – Zählerkarten mit Verbrauchs-KPI, Verlauf, Chart & CSV | ![Daten-Tab](docs/screenshots/webui-daten.png) |
+| **📈 Chart-Modal** – Zählerstand (lineare Zeitachse) & Monatsverbrauch | ![Chart-Modal](docs/screenshots/webui-chart.png) |
+| **📡 Nodes** – ESP32-Status, IP, Firmware | ![Nodes-Tab](docs/screenshots/webui-nodes.png) |
+| **📥 Import** – App-Backup per Drag & Drop | ![Import-Tab](docs/screenshots/webui-import.png) |
+| **📋 Logs** – Echtzeit-Log mit Filter & Export | ![Logs-Tab](docs/screenshots/webui-logs.png) |
+| **⚙️ System** – Statistiken & Versionscheck | ![System-Tab](docs/screenshots/webui-system.png) |
+
+---
+
 ## Installation
 
 ### Option A – direkt von GitHub (empfohlen)
@@ -105,6 +120,8 @@ http://{ioBroker-IP}:8089/
 | 📥 **Import** | App-Backup (JSON Schema 2.0) per Drag & Drop einspielen |
 | 📋 **Logs** | Echtzeit-Log mit Filter, Auto-Scroll, Export |
 | ⚙️ **System** | Statistiken, GitHub-Versionscheck, Ein-Klick-Update |
+
+Screenshots: siehe [Screenshots](#screenshots) oben.
 
 ---
 
@@ -253,78 +270,6 @@ root@IoBroker:~# cat /opt/iobroker/node_modules/iobroker.metermaster/package.jso
 sed -n '9p' /opt/iobroker/node_modules/iobroker.metermaster/main.js
 # Erwartet: const CURRENT_VERSION = '0.8.2';
 ```
-
----
-
-## Changelog
-
-### 0.8.2 (2026-07-04)
-- Fix: Chart-Modal schließt wieder per X, Overlay-Klick und Esc
-- Chart-Steuerung per Event Delegation (Modal vor `<script>` im DOM)
-
-### 0.8.1 (2026-07-04)
-- Fix: Web-UI SyntaxError durch Literal-Zeilenumbruch in CSV-Export-JS
-- Behebt leere Daten/Stats und `showTab is not defined`
-
-### 0.8.0 (2026-07-04)
-- Chart-Modal pro Zähler (Chart.js): Zählerstand-Kurve + Monatsverbrauch-Balken
-- Verbrauchs-KPI auf jeder Zählerkarte (Δ seit letzter Ablesung)
-- CSV-Export pro Zähler (Karte + Chart-Modal)
-- Sprachumschalter DE/EN im Header (localStorage)
-- TYPE_ICONS: `TotalWater`, `HeatMeter`
-
-### 0.7.6 (2026-03-13)
-- Login-Modal in der Web-UI – kein Browser-`prompt()` mehr für Auth
-- `authFetch()`-Wrapper für alle schreibenden Aktionen (401 → Modal)
-- Log-Tab: neueste Einträge werden oben angezeigt
-
-### 0.7.5 (2026-03-13)
-- LED-Buttons auf data-Attribute + Event Delegation umgebaut (kein `onclick`-Attribut mehr)
-- Behebt Browser-SyntaxError durch falsch escapte onclick-Strings
-
-### 0.7.0–0.7.4 (2026-03-13)
-- Bugfix-Serie: Emoji Surrogate-Pairs in `<script>`-Kontext (\uXXXX\uXXXX statt rohen Emojis)
-- `window`-Scope für alle onclick-Funktionen
-- TYPE_ICONS in Node.js-Scope korrekt mit Surrogate-Pairs
-- ESP32 cmd-Verarbeitung: LED und Zähler per Adapter fernsteuern
-- `POST /api/nodes/{MAC}/cmd` mit Basic Auth
-- `nodes.{MAC}.cmd` State – einmalige Auslieferung, danach automatisch gelöscht
-- LED-Buttons im Nodes-Tab der Web-UI
-
-### 0.7.0 (2026-03-13)
-- ESP32 cmd-Verarbeitung: LED und Zähler per Adapter fernsteuern
-- `POST /api/nodes/{MAC}/cmd` Endpunkt mit Basic Auth
-- `nodes.{MAC}.cmd` State – einmalige Auslieferung, danach automatisch gelöscht
-- LED-Buttons (🔴 Ein / ⚫ Aus) im Nodes-Tab der Web-UI
-- `sendNodeCmd()` JavaScript-Funktion im Web-UI
-
-### 0.6.0 (2026-03-13)
-- ESP32 Registrierung direkt am Adapter (`POST /api/register`) statt über simple-api
-- `GET /api/nodes/{MAC}/config` – liefert Config + cmd an ESP32
-- `POST /api/nodes/{MAC}/configAck` – quittiert Config-Übernahme
-- `nodes.{MAC}.cmd` State als Sofortbefehl-Kanal
-- Architekturwechsel: keine `stateChange`-Abhängigkeit von simple-api mehr nötig
-
-### 0.5.0 (2026-03-12)
-- ESP32 Node-Verwaltung: `nodesCache`, `restoreNodesFromStates()`
-- Nodes-Tab in der Web-UI mit Online-Badge, IP-Link, Zähler-Dropdown
-- `/api/nodes`, `/api/discover`, `/api/nodes/{MAC}/config` (GET/POST)
-- Statistik-Dashboard im System-Tab (4 Kacheln)
-- Header-Stats: Ablesungen | Nodes online/gesamt | Uptime | Live
-
-### 0.4.0 (2026-03-09)
-- GitHub-Versionscheck: Releases-API mit Tags-Fallback
-- Update-Befehle mit Copy-to-Clipboard
-- favicon.ico antwortet 204 (keine Auth-Warn-Logs mehr)
-
-### 0.3.1 (2026-03-07)
-- Bugfix: Literal-Zeilenumbrüche in Template-Strings → SyntaxError im Browser
-
-### 0.3.0 (2026-03-07)
-- Bugfix: Unicode-Escapes für Emojis > U+FFFF
-
-### 0.1.0 (2026-03-06)
-- Erstveröffentlichung: HTTP-Empfänger, Web-UI, Log-Viewer, App-Import
 
 ---
 
