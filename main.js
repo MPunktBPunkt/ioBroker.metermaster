@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const https  = require('https');
 const { exec } = require('child_process');
 
-const CURRENT_VERSION = '0.8.2';
+const CURRENT_VERSION = '0.8.3';
 const GITHUB_REPO     = 'MPunktBPunkt/iobroker.metermaster';
 const GITHUB_URL      = 'https://github.com/MPunktBPunkt/iobroker.metermaster';
 
@@ -1075,10 +1075,16 @@ nav {
 .chart-range.active, .chart-range:hover {
   border-color: var(--primary); color: var(--secondary); background: var(--primary-deep);
 }
+.chart-yearly { margin-left: auto; }
 .chart-kpi {
   font-size: .82em; color: var(--accent); margin-bottom: 12px;
   padding: 8px 12px; background: rgba(76,175,80,.08);
   border-radius: 8px; border: 1px solid rgba(76,175,80,.2);
+}
+.chart-kpi-yearly {
+  margin-top: 6px; color: var(--secondary);
+  border-color: rgba(123,84,196,.25); background: rgba(123,84,196,.08);
+  padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(123,84,196,.25);
 }
 .chart-wrap-box {
   background: var(--bg-deep); border: 1px solid var(--border);
@@ -1477,8 +1483,10 @@ input.search {
       <button class="chart-range" data-months="6">6M</button>
       <button class="chart-range" data-months="12">12M</button>
       <button class="chart-range active" data-months="0">All</button>
+      <button class="chart-range chart-yearly" id="chart-yearly-toggle" type="button">↗ Pro Jahr</button>
     </div>
     <div class="chart-kpi" id="chart-kpi" style="display:none"></div>
+    <div class="chart-kpi-yearly" id="chart-kpi-yearly" style="display:none"></div>
     <div class="chart-wrap-box"><canvas id="chart-line"></canvas></div>
     <div class="chart-wrap-box chart-wrap-sm"><canvas id="chart-bar"></canvas></div>
     <div class="chart-modal-foot">
@@ -1564,6 +1572,8 @@ const I18N = {
     no_data:'Noch keine Ablesungen empfangen.<br>Starte einen Sync in der MeterMaster App oder lade ein Backup hoch.',
     history:'Verlauf', since_last:'seit letzter Ablesung', days:'Tage', chart_btn:'Chart', csv_btn:'CSV',
     chart_readings:'Z\u00E4hlerstand', chart_monthly:'Monatsverbrauch', chart_period_all:'Alles',
+    chart_yearly:'Pro Jahr', chart_yearly_proj:'Hochrechnung', chart_per_year:'/Jahr',
+    chart_yearly_hint:'basierend auf {days} {daysLabel} ({delta} {unit})',
     chart_no_data:'Zu wenig Daten f\u00FCr eine Grafik (mind. 2 Ablesungen n\u00F6tig).',
     chart_close:'Schlie\u00DFen', error:'Fehler', consume:'Verbrauch',
     ago_just:'gerade eben', ago_sec:'vor {s}s', ago_min:'vor {m}min'
@@ -1574,6 +1584,8 @@ const I18N = {
     no_data:'No readings received yet.<br>Start a sync in the MeterMaster app or upload a backup.',
     history:'History', since_last:'since last reading', days:'days', chart_btn:'Chart', csv_btn:'CSV',
     chart_readings:'Meter reading', chart_monthly:'Monthly consumption', chart_period_all:'All',
+    chart_yearly:'Per year', chart_yearly_proj:'Projected', chart_per_year:'/yr',
+    chart_yearly_hint:'based on {days} {daysLabel} ({delta} {unit})',
     chart_no_data:'Not enough data for a chart (at least 2 readings required).',
     chart_close:'Close', error:'Error', consume:'Consumption',
     ago_just:'just now', ago_sec:'{s}s ago', ago_min:'{m}min ago'
@@ -1614,6 +1626,8 @@ function applyI18n() {
   if (csvBtn) csvBtn.textContent = '\u2B07 ' + t('csv_btn');
   const cc = document.getElementById('chart-close');
   if (cc) cc.title = t('chart_close');
+  const yearlyBtn = document.getElementById('chart-yearly-toggle');
+  if (yearlyBtn) yearlyBtn.textContent = '\u2197 ' + t('chart_yearly');
 }
 
 function setLang(lang) {
@@ -1628,6 +1642,10 @@ function setLang(lang) {
 let dataCacheList = [];
 let chartCtxIdx = -1;
 let chartRangeMonths = 0;
+let chartShowYearly = false;
+try {
+  chartShowYearly = localStorage.getItem('mm-chart-yearly') === '1';
+} catch {}
 let chartInstLine = null;
 let chartInstBar = null;
 
@@ -1640,6 +1658,17 @@ function calcDelta(history) {
   if (delta < 0) return null;
   const days = Math.max(1, Math.round((last.ts - prev.ts) / 86400000));
   return { delta, days, prev, last };
+}
+
+function calcYearlyProjection(history) {
+  if (!history || history.length < 2) return null;
+  const sorted = history.slice().sort((a, b) => a.ts - b.ts);
+  const first = sorted[0];
+  const last = sorted[sorted.length - 1];
+  const delta = last.value - first.value;
+  if (delta < 0) return null;
+  const days = Math.max(1, (last.ts - first.ts) / 86400000);
+  return { delta, days: Math.max(1, Math.round(days)), yearly: delta * (365 / days) };
 }
 
 function calcMonthlyConsumption(history) {
@@ -1729,12 +1758,31 @@ function renderMeterCharts() {
   initChartTheme();
 
   const delta = calcDelta(allHist);
+  const yearlyEl = document.getElementById('chart-kpi-yearly');
+  const yearlyBtn = document.getElementById('chart-yearly-toggle');
+  if (yearlyBtn) yearlyBtn.classList.toggle('active', chartShowYearly);
+
   if (delta) {
     kpiEl.style.display = 'block';
     kpiEl.textContent = '\uD83D\uDCCA +' + fmtNum(delta.delta) + ' ' + (m.unit || '') +
       ' ' + t('since_last') + ' (' + delta.days + ' ' + t('days') + ')';
   } else {
     kpiEl.style.display = 'none';
+  }
+
+  const projection = chartShowYearly ? calcYearlyProjection(hist) : null;
+  if (projection && yearlyEl) {
+    yearlyEl.style.display = 'block';
+    yearlyEl.textContent = '\u2197 \u2248 ' + fmtNum(projection.yearly) + ' ' + (m.unit || '') +
+      t('chart_per_year') + ' (' + t('chart_yearly_proj') + ': ' +
+      t('chart_yearly_hint', {
+        days: projection.days,
+        daysLabel: t('days'),
+        delta: fmtNum(projection.delta),
+        unit: m.unit || ''
+      }) + ')';
+  } else if (yearlyEl) {
+    yearlyEl.style.display = 'none';
   }
 
   if (hist.length < 2) {
@@ -1786,17 +1834,33 @@ function renderMeterCharts() {
 
   const monthly = calcMonthlyConsumption(hist);
   const monthKeys = Object.keys(monthly).sort();
+  const barDatasets = [{
+    label: t('chart_monthly') + (unit ? ' (' + unit + ')' : ''),
+    data: monthKeys.map(k => monthly[k]),
+    backgroundColor: 'rgba(76,175,80,.55)',
+    borderColor: '#4CAF50',
+    borderWidth: 1
+  }];
+  if (projection) {
+    const monthlyAvg = projection.yearly / 12;
+    barDatasets.push({
+      label: '\u00D8 ' + fmtNum(monthlyAvg) + ' ' + (unit || '') + ' (' + t('chart_yearly_proj') + ')',
+      type: 'line',
+      data: monthKeys.map(() => monthlyAvg),
+      borderColor: '#C8B8FF',
+      backgroundColor: 'transparent',
+      borderWidth: 2,
+      borderDash: [6, 4],
+      pointRadius: 0,
+      fill: false,
+      order: 0
+    });
+  }
   chartInstBar = new Chart(document.getElementById('chart-bar'), {
     type: 'bar',
     data: {
       labels: monthKeys,
-      datasets: [{
-        label: t('chart_monthly') + (unit ? ' (' + unit + ')' : ''),
-        data: monthKeys.map(k => monthly[k]),
-        backgroundColor: 'rgba(76,175,80,.55)',
-        borderColor: '#4CAF50',
-        borderWidth: 1
-      }]
+      datasets: barDatasets
     },
     options: {
       responsive: true, maintainAspectRatio: false,
@@ -1814,7 +1878,7 @@ function openChartModal(idx) {
   if (!m) return;
   chartCtxIdx = idx;
   chartRangeMonths = 0;
-  document.querySelectorAll('.chart-range').forEach(b => {
+  document.querySelectorAll('.chart-range[data-months]').forEach(b => {
     b.classList.toggle('active', b.dataset.months === '0');
   });
   document.getElementById('chart-title').textContent = m.meter;
@@ -2317,10 +2381,17 @@ function initTabs() {
     if (e.target.closest('.chart-close')) { closeChartModal(); return; }
     if (e.target.id === 'chart-overlay') { closeChartModal(); return; }
     if (e.target.closest('#chart-csv-btn')) { if (chartCtxIdx >= 0) exportMeterCsv(chartCtxIdx); return; }
-    const rangeBtn = e.target.closest('.chart-range');
+    const rangeBtn = e.target.closest('.chart-range[data-months]');
     if (rangeBtn) {
       chartRangeMonths = parseInt(rangeBtn.dataset.months, 10) || 0;
-      document.querySelectorAll('.chart-range').forEach(b => b.classList.toggle('active', b === rangeBtn));
+      document.querySelectorAll('.chart-range[data-months]').forEach(b => b.classList.toggle('active', b === rangeBtn));
+      renderMeterCharts();
+      return;
+    }
+    const yearlyBtn = e.target.closest('#chart-yearly-toggle');
+    if (yearlyBtn) {
+      chartShowYearly = !chartShowYearly;
+      try { localStorage.setItem('mm-chart-yearly', chartShowYearly ? '1' : '0'); } catch {}
       renderMeterCharts();
     }
   });

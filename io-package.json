@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "metermaster",
-    "version": "0.8.2",
+    "version": "0.8.3",
     "news": {
+      "0.8.3": {
+        "en": "Chart: linear time axis, yearly consumption projection toggle, README screenshots",
+        "de": "Chart: lineare Zeitachse, Jahresverbrauch-Hochrechnung, README-Screenshots"
+      },
       "0.8.2": {
         "en": "Bugfix: chart modal close button and range filters (modals moved before script init)",
         "de": "Bugfix: Chart-Modal X-Schliessen und Zeitraum-Buttons (Modals vor Script-Init)"
