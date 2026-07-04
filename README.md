@@ -2,11 +2,11 @@
 
 [![MeterMaster Banner](https://github.com/MPunktBPunkt/iobroker.metermaster/raw/main/github-banner.svg)](https://github.com/MPunktBPunkt/iobroker.metermaster)
 
-[![Version](https://img.shields.io/badge/version-0.7.6-blue.svg)](https://github.com/MPunktBPunkt/iobroker.metermaster)
+[![Version](https://img.shields.io/badge/version-0.8.2-blue.svg)](https://github.com/MPunktBPunkt/iobroker.metermaster)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/MPunktBPunkt/iobroker.metermaster/blob/main/LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D16-brightgreen.svg)](https://nodejs.org)
 
-Empfängt Zählerablesungen von der **MeterMaster Android-App**, speichert sie als ioBroker-Datenpunkte und verwaltet **ESP32 Display-Nodes** für die Anzeige von Zählerwerten auf OLED-Displays.
+Empfängt Zählerablesungen von der **[MeterMaster Android-App](https://github.com/MPunktBPunkt/MeterMaster)**, speichert sie als ioBroker-Datenpunkte und verwaltet **ESP32 Display-Nodes** für die Anzeige von Zählerwerten auf OLED-Displays.
 
 ---
 
@@ -18,6 +18,8 @@ Empfängt Zählerablesungen von der **MeterMaster Android-App**, speichert sie a
 - 📈 **Historie** – jeder Zähler hält einen vollständigen `readings.history`-Array
 - 🔐 **Basic Auth** – optionaler Benutzername/Passwort-Schutz
 - 🌐 **Web-UI** – eingebauter Browser-Viewer mit 5 Tabs (Daten, Nodes, Import, Logs, System)
+- 📊 **Charts & CSV** – Verlaufsdiagramme, Monatsverbrauch und CSV-Export pro Zähler
+- 🌍 **DE/EN** – Sprachumschalter in der Web-UI
 - 📥 **Import** – App-Backup (Schema 2.0) direkt über die Web-UI einspielen
 - 📡 **ESP32 Node-Verwaltung** – registrierte Display-Nodes anzeigen und konfigurieren
 - 🎛️ **Fernsteuerung** – Zähler und LED der ESP32-Nodes direkt aus der Web-UI steuern
@@ -63,6 +65,12 @@ Nach der Installation → ioBroker Admin → **Adapter → MeterMaster** → Ins
 | Ausführliches Logging | ✅ | DEBUG-Einträge im Log-Viewer |
 | Log-Puffer | `500` | Max. gespeicherte Log-Einträge |
 | Historie aufbewahren | `0` | 0 = unbegrenzt |
+
+---
+
+## MeterMaster Android-App
+
+Zähler erfassen und synchronisieren mit der **[MeterMaster Android-App](https://github.com/MPunktBPunkt/MeterMaster)** (Quellcode, APK-Build und Anleitung im Repository).
 
 ---
 
@@ -227,14 +235,14 @@ Installing MPunktBPunkt/iobroker.metermaster... (System call)
 changed 1 package in 11s
 upload [1] metermaster.admin .../admin/jsonConfig.json
 upload [0] metermaster.admin .../admin/metermaster.svg
-Updating objects from io-package.json for adapter "metermaster" with version "0.7.6"
+Updating objects from io-package.json for adapter "metermaster" with version "0.8.2"
 Update "system.adapter.metermaster.0"
 
 root@IoBroker:~# iobroker restart metermaster.0
 The adapter "metermaster.0" was started.
 
 root@IoBroker:~# cat /opt/iobroker/node_modules/iobroker.metermaster/package.json | grep '"version"'
-  "version": "0.7.6",
+  "version": "0.8.2",
 ```
 
 > **Hinweis:** Die Meldung `[DEP0169] DeprecationWarning: url.parse()` ist harmlos und kommt vom ioBroker-CLI selbst, nicht vom Adapter.
@@ -243,12 +251,20 @@ root@IoBroker:~# cat /opt/iobroker/node_modules/iobroker.metermaster/package.jso
 
 ```bash
 sed -n '9p' /opt/iobroker/node_modules/iobroker.metermaster/main.js
-# Erwartet: const CURRENT_VERSION = '0.7.6';
+# Erwartet: const CURRENT_VERSION = '0.8.2';
 ```
 
 ---
 
 ## Changelog
+
+### 0.8.2 (2026-07-04)
+- Fix: Chart-Modal schließt wieder per X, Overlay-Klick und Esc
+- Chart-Steuerung per Event Delegation (Modal vor `<script>` im DOM)
+
+### 0.8.1 (2026-07-04)
+- Fix: Web-UI SyntaxError durch Literal-Zeilenumbruch in CSV-Export-JS
+- Behebt leere Daten/Stats und `showTab is not defined`
 
 ### 0.8.0 (2026-07-04)
 - Chart-Modal pro Zähler (Chart.js): Zählerstand-Kurve + Monatsverbrauch-Balken
