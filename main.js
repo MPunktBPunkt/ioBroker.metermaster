@@ -816,16 +816,15 @@ async function serveVersion(res) {
 
 function handleUpdate(req, res) {
     log(LVL.INFO, CAT.SYSTEM, 'Update gestartet', `von ${CURRENT_VERSION} → GitHub`);
-    const cmd = `iobroker upgrade metermaster ${GITHUB_URL}`;
+    const cmd = `iobroker url ${GITHUB_URL} && iobroker restart metermaster.0`;
     exec(cmd, { timeout: 180000 }, (err, stdout, stderr) => {
         const out = (stdout + '\n' + stderr).trim();
         if (err) {
             log(LVL.ERROR, CAT.SYSTEM, 'Update fehlgeschlagen', err.message);
             sendJson(res, 500, { ok: false, error: err.message, output: out });
         } else {
-            log(LVL.INFO, CAT.SYSTEM, 'Update erfolgreich — starte neu…');
+            log(LVL.INFO, CAT.SYSTEM, 'Update erfolgreich', out.slice(0, 200));
             sendJson(res, 200, { ok: true, output: out });
-            setTimeout(() => exec('iobroker restart metermaster', () => {}), 2000);
         }
     });
 }
