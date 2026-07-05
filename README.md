@@ -6,7 +6,7 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/MPunktBPunkt/iobroker.metermaster/blob/main/LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D16-brightgreen.svg)](https://nodejs.org)
 
-Empfängt Zählerablesungen von der **[MeterMaster Android-App](https://github.com/MPunktBPunkt/MeterMaster)**, speichert sie als ioBroker-Datenpunkte und verwaltet **ESP32 Display-Nodes** für die Anzeige von Zählerwerten auf OLED-Displays.
+Empfängt Zählerablesungen von der **[MeterMaster Android-App](https://play.google.com/store/apps/details?id=com.propertymanagement.metermaster)**, speichert sie als ioBroker-Datenpunkte und verwaltet **ESP32 Display-Nodes** für die Anzeige von Zählerwerten auf OLED-Displays. Quellcode: [GitHub](https://github.com/MPunktBPunkt/MeterMaster).
 
 ---
 
@@ -85,7 +85,14 @@ Nach der Installation → ioBroker Admin → **Adapter → MeterMaster** → Ins
 
 ## MeterMaster Android-App
 
-Zähler erfassen und synchronisieren mit der **[MeterMaster Android-App](https://github.com/MPunktBPunkt/MeterMaster)** (Quellcode, APK-Build und Anleitung im Repository).
+Zähler erfassen und mit ioBroker synchronisieren — die passende App:
+
+| | |
+|---|---|
+| **Google Play** | [**MeterMaster**](https://play.google.com/store/apps/details?id=com.propertymanagement.metermaster) — App installieren, Zähler ablesen und an den Adapter senden |
+| **GitHub** | [**MPunktBPunkt/MeterMaster**](https://github.com/MPunktBPunkt/MeterMaster) — Quellcode, APK-Build und Anleitung |
+
+[![Jetzt bei Google Play](https://play.google.com/intl/de_de/badges/static/images/badges/de_badge_web_generic.png)](https://play.google.com/store/apps/details?id=com.propertymanagement.metermaster)
 
 ---
 
