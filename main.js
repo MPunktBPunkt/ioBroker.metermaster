@@ -1,10 +1,10 @@
 'use strict';
 
 const utils  = require('@iobroker/adapter-core');
-const http   = require('http');
-const crypto = require('crypto');
-const https  = require('https');
-const { exec } = require('child_process');
+const http   = require('node:http');
+const crypto = require('node:crypto');
+const https  = require('node:https');
+const { exec } = require('node:child_process');
 
 const CURRENT_VERSION = '0.8.3';
 const GITHUB_REPO     = 'MPunktBPunkt/iobroker.metermaster';
