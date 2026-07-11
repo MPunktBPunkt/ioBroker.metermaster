@@ -87,7 +87,12 @@
     "compact": false,
     "adminUI": {
       "config": "json"
-    }
+    },
+    "globalDependencies": [
+      {
+        "admin": ">=7.8.23"
+      }
+    ]
   },
   "native": {
     "port": 8089,
