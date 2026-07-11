@@ -283,3 +283,5 @@ sed -n '9p' /opt/iobroker/node_modules/iobroker.metermaster/main.js
 ## Lizenz
 
 MIT © MPunktBPunkt
+
+[Older changelogs can be found there](CHANGELOG_OLD.md)
