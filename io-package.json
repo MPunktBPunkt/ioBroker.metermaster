@@ -75,6 +75,7 @@
       "esp32",
       "display"
     ],
+    "tier": 2,
     "license": "MIT",
     "mode": "daemon",
     "type": "general",
