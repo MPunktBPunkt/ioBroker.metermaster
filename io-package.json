@@ -75,7 +75,10 @@
       "esp32",
       "display"
     ],
-    "license": "MIT",
+    "licenseInformation": {
+      "type": "free",
+      "license": "MIT"
+    },
     "mode": "daemon",
     "type": "general",
     "main": "main.js",
