@@ -78,7 +78,6 @@
     "license": "MIT",
     "mode": "daemon",
     "type": "general",
-    "main": "main.js",
     "icon": "metermaster.svg",
     "enabled": true,
     "extIcon": "https://raw.githubusercontent.com/MPunktBPunkt/iobroker.metermaster/main/admin/metermaster.svg",
