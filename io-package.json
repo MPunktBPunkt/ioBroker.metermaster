@@ -87,7 +87,12 @@
     "compact": false,
     "adminUI": {
       "config": "json"
-    }
+    },
+    "dependencies": [
+      {
+        "js-controller": ">=6.0.11"
+      }
+    ]
   },
   "native": {
     "port": 8089,

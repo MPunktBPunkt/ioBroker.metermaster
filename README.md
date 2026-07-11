@@ -283,3 +283,9 @@ sed -n '9p' /opt/iobroker/node_modules/iobroker.metermaster/main.js
 ## Lizenz
 
 MIT © MPunktBPunkt
+
+## Changelog
+
+### **WORK IN PROGRESS**
+- (ioBroker-Bot) Adapter requires js-controller >= 6.0.11 now.
+
