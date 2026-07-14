@@ -143,8 +143,8 @@
     "platform": "Javascript/Node.js",
     "icon": "metermaster.svg",
     "enabled": true,
-    "extIcon": "https://raw.githubusercontent.com/MPunktBPunkt/iobroker.metermaster/main/admin/metermaster.svg",
-    "readme": "https://github.com/MPunktBPunkt/iobroker.metermaster/blob/main/README.md",
+    "extIcon": "https://raw.githubusercontent.com/MPunktBPunkt/ioBroker.metermaster/main/admin/metermaster.svg",
+    "readme": "https://github.com/MPunktBPunkt/ioBroker.metermaster/blob/main/README.md",
     "compact": true,
     "adminUI": {
       "config": "json"
@@ -156,7 +156,7 @@
     ],
     "globalDependencies": [
       {
-        "admin": ">=7.6.17"
+        "admin": ">=7.6.20"
       }
     ]
   },
