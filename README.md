@@ -285,4 +285,10 @@ See [io-package.json](io-package.json) `common.news` for full history.
 
 MIT © [MPunktBPunkt](https://github.com/MPunktBPunkt)
 
-See [LICENSE](LICENSE) for the full license text.
+MIT © MPunktBPunkt
+
+## Changelog
+
+### **WORK IN PROGRESS**
+- (ioBroker-Bot) Adapter requires js-controller >= 6.0.11 now.
+
