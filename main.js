@@ -7,8 +7,8 @@ const https  = require('node:https');
 const { exec } = require('node:child_process');
 
 const CURRENT_VERSION = '0.9.0';
-const GITHUB_REPO     = 'MPunktBPunkt/iobroker.metermaster';
-const GITHUB_URL      = 'https://github.com/MPunktBPunkt/iobroker.metermaster';
+const GITHUB_REPO     = 'MPunktBPunkt/ioBroker.metermaster';
+const GITHUB_URL      = 'https://github.com/MPunktBPunkt/ioBroker.metermaster';
 
 // Node gilt als online wenn lastSeen < NODE_ONLINE_SEC Sekunden
 const NODE_ONLINE_SEC = 120;
@@ -816,7 +816,7 @@ async function serveVersion(res) {
 
 function handleUpdate(req, res) {
     log(LVL.INFO, CAT.SYSTEM, 'Update gestartet', `von ${CURRENT_VERSION} → GitHub`);
-    const cmd = `iobroker url ${GITHUB_URL} && iobroker restart metermaster.0`;
+    const cmd = `iobroker upgrade metermaster && iobroker restart metermaster.0`;
     exec(cmd, { timeout: 180000 }, (err, stdout, stderr) => {
         const out = (stdout + '\n' + stderr).trim();
         if (err) {
@@ -1437,7 +1437,7 @@ input.search {
     <div class="ver-row"><span class="ver-label">Adapter</span>      <span class="ver-val">iobroker.metermaster</span></div>
     <div class="ver-row"><span class="ver-label">Port</span>         <span class="ver-val">${port}</span></div>
     <div class="ver-row"><span class="ver-label">Repository</span>
-      <a href="https://github.com/MPunktBPunkt/iobroker.metermaster" target="_blank"
+      <a href="https://github.com/MPunktBPunkt/ioBroker.metermaster" target="_blank"
          style="color:var(--primary);font-size:.84em">GitHub ↗</a>
     </div>
   </div>
@@ -1448,8 +1448,8 @@ input.search {
       Adapter aktualisieren — Befehle in der ioBroker-Konsole ausführen:
     </p>
     <div class="cmd-row">
-      <code class="cmd-code">iobroker url https://github.com/MPunktBPunkt/iobroker.metermaster</code>
-      <button class="cmd-copy" onclick="copyCmd(this)" data-cmd="iobroker url https://github.com/MPunktBPunkt/iobroker.metermaster" title="Kopieren">📋</button>
+      <code class="cmd-code">iobroker upgrade metermaster</code>
+      <button class="cmd-copy" onclick="copyCmd(this)" data-cmd="iobroker upgrade metermaster" title="Kopieren">📋</button>
     </div>
     <div class="cmd-row" style="margin-top:8px">
       <code class="cmd-code">iobroker restart metermaster.0</code>

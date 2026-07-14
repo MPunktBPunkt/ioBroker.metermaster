@@ -6,7 +6,7 @@
     "name": "MPunktBPunkt",
     "url": "https://github.com/MPunktBPunkt"
   },
-  "homepage": "https://github.com/MPunktBPunkt/iobroker.metermaster",
+  "homepage": "https://github.com/MPunktBPunkt/ioBroker.metermaster",
   "license": "MIT",
   "keywords": [
     "ioBroker",
@@ -18,18 +18,18 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/MPunktBPunkt/iobroker.metermaster"
+    "url": "https://github.com/MPunktBPunkt/ioBroker.metermaster.git"
   },
   "bugs": {
-    "url": "https://github.com/MPunktBPunkt/iobroker.metermaster/issues"
+    "url": "https://github.com/MPunktBPunkt/ioBroker.metermaster/issues"
   },
   "main": "main.js",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
-    "test:package": "mocha test/package --exit",
-    "test:integration": "mocha test/integration --exit",
+    "test:package": "node node_modules/@iobroker/testing/node_modules/mocha/bin/mocha.js test/package --exit",
+    "test:integration": "node node_modules/@iobroker/testing/node_modules/mocha/bin/mocha.js test/integration --exit",
     "test": "npm run test:package && npm run test:integration",
     "lint": "eslint ."
   },
@@ -39,9 +39,7 @@
   "devDependencies": {
     "@iobroker/adapter-dev": "^1.5.0",
     "@iobroker/eslint-config": "^2.3.4",
-    "@iobroker/testing": "5.2.2",
-    "eslint": "^9.38.0",
-    "mocha": "^10.7.0"
+    "@iobroker/testing": "^5.2.2"
   },
   "files": [
     "admin{,/!(src)/**}/!(tsconfig|tsconfig.*).json",
