@@ -1,14 +1,14 @@
 {
-  "port": "HTTP port",
-  "port_help": "Port the adapter listens on. Default: 8089",
-  "user": "Username",
-  "user_help": "Basic auth username (must match the MeterMaster app configuration)",
-  "password": "Password",
-  "password_help": "Basic auth password",
-  "verboseLogging": "Verbose logging",
-  "verboseLogging_help": "Show DEBUG entries in the Web-UI log viewer",
-  "logBufferSize": "Log buffer (entries)",
-  "logBufferSize_help": "Maximum number of stored log entries in the Web-UI",
-  "keepHistory": "Keep history",
-  "keepHistory_help": "0 = unlimited; otherwise max. number of entries per meter in readings.history"
+  "port": "HTTP 端口",
+  "port_help": "适配器监听的端口。默认：8089",
+  "user": "用户名",
+  "user_help": "Basic Auth 用户名（须与 MeterMaster 应用配置一致）",
+  "password": "密码",
+  "password_help": "Basic Auth 密码",
+  "verboseLogging": "详细日志",
+  "verboseLogging_help": "在 Web-UI 日志查看器中显示 DEBUG 条目",
+  "logBufferSize": "日志缓冲区（条目）",
+  "logBufferSize_help": "Web-UI 中存储的最大日志条目数",
+  "keepHistory": "保留历史",
+  "keepHistory_help": "0 = 无限制；否则每个表计在 readings.history 中的最大条目数"
 }
