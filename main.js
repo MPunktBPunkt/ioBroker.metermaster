@@ -1,12 +1,12 @@
 'use strict';
 
 const utils  = require('@iobroker/adapter-core');
-const http   = require('http');
-const crypto = require('crypto');
-const https  = require('https');
-const { exec } = require('child_process');
+const http   = require('node:http');
+const crypto = require('node:crypto');
+const https  = require('node:https');
+const { exec } = require('node:child_process');
 
-const CURRENT_VERSION = '0.8.3';
+const CURRENT_VERSION = '0.9.0';
 const GITHUB_REPO     = 'MPunktBPunkt/iobroker.metermaster';
 const GITHUB_URL      = 'https://github.com/MPunktBPunkt/iobroker.metermaster';
 
@@ -502,7 +502,7 @@ async function storeReading(data) {
     cacheReading(house, apt, meter, value, data.unit||'', data.typeName||'', data.readingDate, ts);
 
     readingsReceived++;
-    await adapter.setStateAsync('info.lastSync',         { val: new Date().toISOString(), ack: true });
+    await adapter.setStateAsync('info.lastSync',         { val: Date.now(), ack: true });
     await adapter.setStateAsync('info.readingsReceived', { val: readingsReceived,         ack: true });
     return base;
 }
@@ -1529,7 +1529,7 @@ function setAuth(user, pass) {
 function showLoginModal(msg) {
   document.getElementById('login-msg').textContent = msg || '';
   document.getElementById('login-overlay').style.display = 'flex';
-  setTimeout(() => document.getElementById('login-user').focus(), 50);
+  window.setTimeout(() => document.getElementById('login-user').focus(), 50);
 }
 function hideLoginModal() {
   document.getElementById('login-overlay').style.display = 'none';
@@ -2097,7 +2097,7 @@ window.saveNodeConfig = async function saveNodeConfig(mac) {
     const d = await r.json();
     if (d.ok) {
       msg.innerHTML = '<span style="color:var(--accent);font-size:.82em;">\u2713 Gespeichert</span>';
-      setTimeout(() => { msg.textContent = ''; }, 3000);
+      window.setTimeout(() => { msg.textContent = ''; }, 3000);
     } else {
       msg.innerHTML = '<span style="color:var(--danger);font-size:.82em;">\u2717 '+esc(d.error||'Fehler')+'</span>';
     }
@@ -2121,7 +2121,7 @@ window.sendNodeCmd = async function sendNodeCmd(mac, cmd) {
       msgEl.innerHTML = d.ok
         ? '<span style="color:var(--accent);">✓</span>'
         : '<span style="color:var(--danger);">✗</span>';
-      setTimeout(() => { if (msgEl) msgEl.textContent = ''; }, 3000);
+      window.setTimeout(() => { if (msgEl) msgEl.textContent = ''; }, 3000);
     }
   } catch(e) {
     if (msgEl) msgEl.innerHTML = '<span style="color:var(--danger);">✗</span>';
@@ -2262,8 +2262,8 @@ window.exportLogs = function exportLogs() {
 // Log-Filter EventListener \u2192 werden in initLogFilters() gesetzt
 
 function startLive() {
-  clearInterval(logTimer);
-  logTimer = setInterval(async () => { await fetchLogs(); await fetchStats(); }, 3000);
+  window.clearInterval(logTimer);
+  logTimer = window.setInterval(async () => { await fetchLogs(); await fetchStats(); }, 3000);
 }
 
 
@@ -2310,7 +2310,7 @@ async function doUpdate() {
     if (d.ok) {
       outBox.textContent = '\u2705 Update erfolgreich.' + String.fromCharCode(10) + 'Adapter wird neu gestartet\u2026' + String.fromCharCode(10,10) + (d.output||'');
       document.getElementById('sv-status').innerHTML = '<span class="badge-ok">\u2713 Neu gestartet</span>';
-      setTimeout(() => { outBox.textContent += String.fromCharCode(10) + '\u27F3 Seite wird neu geladen\u2026'; location.reload(); }, 8000);
+      window.setTimeout(() => { outBox.textContent += String.fromCharCode(10) + '\u27F3 Seite wird neu geladen\u2026'; location.reload(); }, 8000);
     } else {
       outBox.textContent = '\u274C Fehler:' + String.fromCharCode(10) + (d.error||'') + String.fromCharCode(10,10) + (d.output||'');
       btn.style.display = ''; spin.style.display = 'none';
@@ -2329,7 +2329,7 @@ window.copyCmd = function copyCmd(btn) {
   navigator.clipboard.writeText(cmd).then(() => {
     btn.textContent = '\u2713';
     btn.classList.add('copied');
-    setTimeout(() => { btn.textContent = '\uD83D\uDCCB'; btn.classList.remove('copied'); }, 1800);
+    window.setTimeout(() => { btn.textContent = '\uD83D\uDCCB'; btn.classList.remove('copied'); }, 1800);
   }).catch(() => {
     // Fallback für ältere Browser / HTTP-Kontext
     const ta = document.createElement('textarea');
@@ -2338,7 +2338,7 @@ window.copyCmd = function copyCmd(btn) {
     document.execCommand('copy');
     document.body.removeChild(ta);
     btn.textContent = '\u2713'; btn.classList.add('copied');
-    setTimeout(() => { btn.textContent = '\uD83D\uDCCB'; btn.classList.remove('copied'); }, 1800);
+    window.setTimeout(() => { btn.textContent = '\uD83D\uDCCB'; btn.classList.remove('copied'); }, 1800);
   });
 }
 
@@ -2435,7 +2435,7 @@ function initTabs() {
   const ft = document.getElementById('ft');
   if (ft) ft.addEventListener('input', applyLogFilter);
   const ar = document.getElementById('ar');
-  if (ar) ar.addEventListener('change', e => { if(e.target.checked) startLive(); else clearInterval(logTimer); });
+  if (ar) ar.addEventListener('change', e => { if(e.target.checked) startLive(); else window.clearInterval(logTimer); });
 }
 
 async function init() {

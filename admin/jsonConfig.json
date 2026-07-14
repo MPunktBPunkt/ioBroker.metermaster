@@ -1,46 +1,77 @@
 {
+  "i18n": true,
   "type": "panel",
   "items": {
     "port": {
       "type": "number",
-      "label": "HTTP Port",
+      "label": "port",
       "min": 1024,
       "max": 65535,
       "default": 8089,
-      "help": "Port auf dem der Adapter lauscht. Standard: 8089"
+      "help": "port_help",
+      "xs": 12,
+      "sm": 6,
+      "md": 4,
+      "lg": 3,
+      "xl": 3
     },
     "user": {
       "type": "text",
-      "label": "Benutzername",
+      "label": "user",
       "default": "metermaster",
-      "help": "Basic-Auth Benutzername (muss in der MeterMaster App identisch eingetragen sein)"
+      "help": "user_help",
+      "xs": 12,
+      "sm": 6,
+      "md": 4,
+      "lg": 3,
+      "xl": 3
     },
     "password": {
       "type": "password",
-      "label": "Passwort",
+      "label": "password",
       "default": "",
-      "help": "Basic-Auth Passwort"
+      "help": "password_help",
+      "xs": 12,
+      "sm": 6,
+      "md": 4,
+      "lg": 3,
+      "xl": 3
     },
     "verboseLogging": {
       "type": "checkbox",
-      "label": "Ausführliches Logging",
+      "label": "verboseLogging",
       "default": true,
-      "help": "DEBUG-Einträge im Web-UI Log-Viewer anzeigen"
+      "help": "verboseLogging_help",
+      "xs": 12,
+      "sm": 6,
+      "md": 4,
+      "lg": 3,
+      "xl": 3
     },
     "logBufferSize": {
       "type": "number",
-      "label": "Log-Puffer (Einträge)",
+      "label": "logBufferSize",
       "min": 50,
       "max": 5000,
       "default": 500,
-      "help": "Maximale Anzahl gespeicherter Log-Einträge im Web-UI"
+      "help": "logBufferSize_help",
+      "xs": 12,
+      "sm": 6,
+      "md": 4,
+      "lg": 3,
+      "xl": 3
     },
     "keepHistory": {
       "type": "number",
-      "label": "Historie aufbewahren",
+      "label": "keepHistory",
       "min": 0,
       "default": 0,
-      "help": "0 = unbegrenzt; sonst max. Anzahl Einträge pro Zähler in readings.history"
+      "help": "keepHistory_help",
+      "xs": 12,
+      "sm": 6,
+      "md": 4,
+      "lg": 3,
+      "xl": 3
     }
   }
 }
