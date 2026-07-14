@@ -1,14 +1,14 @@
 {
-  "port": "HTTP port",
-  "port_help": "Port the adapter listens on. Default: 8089",
-  "user": "Username",
-  "user_help": "Basic auth username (must match the MeterMaster app configuration)",
-  "password": "Password",
-  "password_help": "Basic auth password",
-  "verboseLogging": "Verbose logging",
-  "verboseLogging_help": "Show DEBUG entries in the Web-UI log viewer",
-  "logBufferSize": "Log buffer (entries)",
-  "logBufferSize_help": "Maximum number of stored log entries in the Web-UI",
-  "keepHistory": "Keep history",
-  "keepHistory_help": "0 = unlimited; otherwise max. number of entries per meter in readings.history"
+  "port": "Порт HTTP",
+  "port_help": "Порт, на котором работает адаптер. По умолчанию: 8089",
+  "user": "Имя пользователя",
+  "user_help": "Имя пользователя Basic Auth (должно совпадать с настройками приложения MeterMaster)",
+  "password": "Пароль",
+  "password_help": "Пароль Basic Auth",
+  "verboseLogging": "Подробное логирование",
+  "verboseLogging_help": "Показывать записи DEBUG в просмотрщике логов Web-UI",
+  "logBufferSize": "Буфер логов (записи)",
+  "logBufferSize_help": "Максимальное количество сохранённых записей логов в Web-UI",
+  "keepHistory": "Хранить историю",
+  "keepHistory_help": "0 = без ограничений; иначе макс. количество записей на счётчик в readings.history"
 }
