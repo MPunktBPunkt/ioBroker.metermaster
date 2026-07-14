@@ -2,59 +2,59 @@
 
 [![MeterMaster Banner](https://github.com/MPunktBPunkt/iobroker.metermaster/raw/main/github-banner.svg)](https://github.com/MPunktBPunkt/iobroker.metermaster)
 
-[![Version](https://img.shields.io/badge/version-0.8.3-blue.svg)](https://github.com/MPunktBPunkt/iobroker.metermaster)
+[![Version](https://img.shields.io/badge/version-0.9.0-blue.svg)](https://github.com/MPunktBPunkt/iobroker.metermaster)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/MPunktBPunkt/iobroker.metermaster/blob/main/LICENSE)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D16-brightgreen.svg)](https://nodejs.org)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org)
 
-Empfängt Zählerablesungen von der **[MeterMaster Android-App](https://play.google.com/store/apps/details?id=com.propertymanagement.metermaster)**, speichert sie als ioBroker-Datenpunkte und verwaltet **ESP32 Display-Nodes** für die Anzeige von Zählerwerten auf OLED-Displays. Quellcode: [GitHub](https://github.com/MPunktBPunkt/MeterMaster).
+Receives meter readings from the **[MeterMaster Android app](https://play.google.com/store/apps/details?id=com.propertymanagement.metermaster)**, stores them as ioBroker data points, and manages **ESP32 display nodes** for showing meter values on OLED displays. Source code: [GitHub](https://github.com/MPunktBPunkt/MeterMaster).
 
 ---
 
 ## Features
 
-- 📡 **HTTP-Empfänger** – nimmt Ablesungen direkt von der App entgegen
-- 🏷️ **Automatische Datenpunkte** – States werden beim ersten Sync selbstständig angelegt
-- 🕐 **Korrekter Zeitstempel** – `ts` des States entspricht dem echten Ablesedatum
-- 📈 **Historie** – jeder Zähler hält einen vollständigen `readings.history`-Array
-- 🔐 **Basic Auth** – optionaler Benutzername/Passwort-Schutz
-- 🌐 **Web-UI** – eingebauter Browser-Viewer mit 5 Tabs (Daten, Nodes, Import, Logs, System)
-- 📊 **Charts & CSV** – Verlaufsdiagramme, Monatsverbrauch und CSV-Export pro Zähler
-- 🌍 **DE/EN** – Sprachumschalter in der Web-UI
-- 📥 **Import** – App-Backup (Schema 2.0) direkt über die Web-UI einspielen
-- 📡 **ESP32 Node-Verwaltung** – registrierte Display-Nodes anzeigen und konfigurieren
-- 🎛️ **Fernsteuerung** – Zähler und LED der ESP32-Nodes direkt aus der Web-UI steuern
+- **HTTP receiver** – accepts readings directly from the app
+- **Automatic data points** – states are created automatically on first sync
+- **Correct timestamps** – state `ts` reflects the actual reading date
+- **History** – each meter keeps a full `readings.history` array
+- **Basic Auth** – optional username/password protection
+- **Web UI** – built-in browser viewer with 5 tabs (Data, Nodes, Import, Logs, System)
+- **Charts & CSV** – history charts, monthly consumption, and CSV export per meter
+- **DE/EN** – language switch in the Web UI
+- **Import** – app backup (schema 2.0) via the Web UI
+- **ESP32 node management** – view and configure registered display nodes
+- **Remote control** – control meter selection and LED of ESP32 nodes from the Web UI
 
 ---
 
 ## Screenshots
 
-Die eingebaute Web-UI bietet fünf Tabs — hier ein Überblick:
+The built-in Web UI offers five tabs — overview:
 
 | | |
 |---|---|
-| **📊 Daten** – Zählerkarten mit Verbrauchs-KPI, Verlauf, Chart & CSV | ![Daten-Tab](docs/screenshots/webui-daten.png) |
-| **📈 Chart-Modal** – Zählerstand (lineare Zeitachse) & Monatsverbrauch | ![Chart-Modal](docs/screenshots/webui-chart.png) |
-| **📡 Nodes** – ESP32-Status, IP, Firmware | ![Nodes-Tab](docs/screenshots/webui-nodes.png) |
-| **📥 Import** – App-Backup per Drag & Drop | ![Import-Tab](docs/screenshots/webui-import.png) |
-| **📋 Logs** – Echtzeit-Log mit Filter & Export | ![Logs-Tab](docs/screenshots/webui-logs.png) |
-| **⚙️ System** – Statistiken & Versionscheck | ![System-Tab](docs/screenshots/webui-system.png) |
+| **Data** – meter cards with consumption KPI, history, chart & CSV | ![Data tab](docs/screenshots/webui-daten.png) |
+| **Chart modal** – meter reading (linear time axis) & monthly consumption | ![Chart modal](docs/screenshots/webui-chart.png) |
+| **Nodes** – ESP32 status, IP, firmware | ![Nodes tab](docs/screenshots/webui-nodes.png) |
+| **Import** – app backup via drag & drop | ![Import tab](docs/screenshots/webui-import.png) |
+| **Logs** – real-time log with filter & export | ![Logs tab](docs/screenshots/webui-logs.png) |
+| **System** – statistics & version check | ![System tab](docs/screenshots/webui-system.png) |
 
 ---
 
 ## Installation
 
-### Option A – direkt von GitHub (empfohlen)
+### Option A – from GitHub (recommended)
 
 ```bash
 iobroker add https://github.com/MPunktBPunkt/iobroker.metermaster
 iobroker start metermaster
 ```
 
-### Option B – manuell (ohne Internet / Offline)
+### Option B – manual (offline)
 
 ```bash
 mkdir -p /opt/iobroker/node_modules/iobroker.metermaster
-# Dateien kopieren: main.js  io-package.json  package.json  admin/
+# Copy files: main.js  io-package.json  package.json  admin/
 cd /opt/iobroker/node_modules/iobroker.metermaster
 npm install
 cd /opt/iobroker
@@ -62,162 +62,162 @@ iobroker add metermaster
 iobroker start metermaster
 ```
 
-Firewall falls nötig: `sudo ufw allow 8089/tcp`
+Open firewall if needed: `sudo ufw allow 8089/tcp`
 
-Vollständige Installationsanleitung: [INSTALLATION.md](INSTALLATION.md)
+Full installation guide: [INSTALLATION.md](INSTALLATION.md)
 
 ---
 
-## Instanz konfigurieren
+## Instance configuration
 
-Nach der Installation → ioBroker Admin → **Adapter → MeterMaster** → Instanz anlegen:
+After installation → ioBroker Admin → **Adapters → MeterMaster** → create instance:
 
-| Einstellung | Standard | Beschreibung |
+| Setting | Default | Description |
 |---|---|---|
-| HTTP Port | `8089` | Port auf dem der Adapter lauscht |
-| Benutzername | `metermaster` | Basic-Auth Username |
-| Passwort | – | Basic-Auth Passwort |
-| Ausführliches Logging | ✅ | DEBUG-Einträge im Log-Viewer |
-| Log-Puffer | `500` | Max. gespeicherte Log-Einträge |
-| Historie aufbewahren | `0` | 0 = unbegrenzt |
+| HTTP port | `8089` | Port the adapter listens on |
+| Username | `metermaster` | Basic auth username |
+| Password | – | Basic auth password |
+| Verbose logging | enabled | Show DEBUG entries in log viewer |
+| Log buffer | `500` | Max. stored log entries |
+| Keep history | `0` | 0 = unlimited |
 
 ---
 
-## MeterMaster Android-App
+## MeterMaster Android app
 
-Zähler erfassen und mit ioBroker synchronisieren — die passende App:
+Capture meters and sync with ioBroker:
 
 | | |
 |---|---|
-| **Google Play** | [**MeterMaster**](https://play.google.com/store/apps/details?id=com.propertymanagement.metermaster) — App installieren, Zähler ablesen und an den Adapter senden |
-| **GitHub** | [**MPunktBPunkt/MeterMaster**](https://github.com/MPunktBPunkt/MeterMaster) — Quellcode, APK-Build und Anleitung |
+| **Google Play** | [**MeterMaster**](https://play.google.com/store/apps/details?id=com.propertymanagement.metermaster) – install the app, read meters, and send to the adapter |
+| **GitHub** | [**MPunktBPunkt/MeterMaster**](https://github.com/MPunktBPunkt/MeterMaster) – source code, APK build, and documentation |
 
-[![Jetzt bei Google Play](https://play.google.com/intl/de_de/badges/static/images/badges/de_badge_web_generic.png)](https://play.google.com/store/apps/details?id=com.propertymanagement.metermaster)
+[![Get it on Google Play](https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png)](https://play.google.com/store/apps/details?id=com.propertymanagement.metermaster)
 
 ---
 
-## MeterMaster App konfigurieren
+## Configure the MeterMaster app
 
-**Einstellungen → ioBroker → MeterMaster Adapter:**
+**Settings → ioBroker → MeterMaster adapter:**
 
-| Feld | Wert |
+| Field | Value |
 |---|---|
-| ioBroker aktivieren | ✅ |
-| IP / Hostname | IP des ioBroker-Servers |
-| Adapter-Port | `8089` |
-| Benutzername | wie im Adapter konfiguriert |
-| Passwort | wie im Adapter konfiguriert |
+| Enable ioBroker | on |
+| IP / hostname | IP of the ioBroker server |
+| Adapter port | `8089` |
+| Username | as configured in the adapter |
+| Password | as configured in the adapter |
 
-„Verbindung testen" → sollte `MeterMaster-Adapter erreichbar ✓` zurückgeben.
+"Test connection" should return `MeterMaster adapter reachable ✓`.
 
 ---
 
-## Web-UI
+## Web UI
 
-Aufrufbar ohne Passwort:
+Accessible without password:
 
 ```
 http://{ioBroker-IP}:8089/
 ```
 
-| Tab | Inhalt |
+| Tab | Content |
 |---|---|
-| 📊 **Daten** | Alle empfangenen Zähler, gegliedert nach Haus/Wohnung, mit Verlauf, Chart-Modal und CSV-Export |
-| 📡 **Nodes** | Registrierte ESP32-Nodes: Status, IP-Link, FW-Version, Zähler-Dropdown, LED-Steuerung |
-| 📥 **Import** | App-Backup (JSON Schema 2.0) per Drag & Drop einspielen |
-| 📋 **Logs** | Echtzeit-Log mit Filter, Auto-Scroll, Export |
-| ⚙️ **System** | Statistiken, GitHub-Versionscheck, Ein-Klick-Update |
+| **Data** | All received meters grouped by house/apartment, with history, chart modal, and CSV export |
+| **Nodes** | Registered ESP32 nodes: status, IP link, firmware, meter dropdown, LED control |
+| **Import** | App backup (JSON schema 2.0) via drag & drop |
+| **Logs** | Real-time log with filter, auto-scroll, export |
+| **System** | Statistics, GitHub version check, one-click update |
 
-Screenshots: siehe [Screenshots](#screenshots) oben.
-
----
-
-## ESP32 Display-Node
-
-Der Adapter unterstützt den [MeterMaster ESP32 Node](https://github.com/MPunktBPunkt/esp32.MeterMaster) als OLED-Display-Companion.
-
-### Ablauf
-1. ESP32 sendet Heartbeat alle 60 s: `POST :8089/api/register`
-2. Adapter legt `metermaster.0.nodes.{MAC}.*` States automatisch an
-3. ESP32 pollt alle 15 s: `GET :8089/api/nodes/{MAC}/config`
-4. Adapter liefert Config und optionale Sofortbefehle (cmd)
-
-### Nodes-Tab
-- Online/Offline-Badge (grün wenn Heartbeat < 120 s)
-- IP als klickbarer Link → öffnet ESP32 Web-UI
-- Zähler-Dropdown: Zähler zuweisen → ESP32 übernimmt beim nächsten Poll
-- LED-Buttons: 🔴 Ein / ⚫ Aus → sofortiger Befehl via cmd-State
+Screenshots: see [Screenshots](#screenshots) above.
 
 ---
 
-## Angelegte Datenpunkte
+## ESP32 display node
+
+The adapter supports the [MeterMaster ESP32 node](https://github.com/MPunktBPunkt/esp32.MeterMaster) as an OLED display companion.
+
+### Flow
+1. ESP32 sends heartbeat every 60 s: `POST :8089/api/register`
+2. Adapter creates `metermaster.0.nodes.{MAC}.*` states automatically
+3. ESP32 polls every 15 s: `GET :8089/api/nodes/{MAC}/config`
+4. Adapter returns config and optional immediate commands (cmd)
+
+### Nodes tab
+- Online/offline badge (green if heartbeat < 120 s)
+- IP as clickable link → opens ESP32 Web UI
+- Meter dropdown: assign meter → ESP32 picks it up on next poll
+- LED buttons: on/off → immediate command via cmd state
+
+---
+
+## Created data points
 
 ```
 metermaster.0.
-├── info.connection        bool    Adapter verbunden
-├── info.lastSync          string  ISO-8601 Zeitpunkt letzter Sync
-├── info.readingsReceived  number  Ablesungen gesamt
+├── info.connection        bool    Adapter connected
+├── info.lastSync          number  Timestamp of last sync (ms)
+├── info.readingsReceived  number  Total readings received
 │
-├── {Haus}/{Wohnung}/{Zähler}/
-│   ├── readings.latest      number  Letzter Messwert (ts = Ablesedatum)
-│   ├── readings.latestDate  string  ISO-8601 Datum
-│   ├── readings.history     string  JSON-Array aller Ablesungen
+├── {House}/{Apartment}/{Meter}/
+│   ├── readings.latest      number  Latest value (ts = reading date)
+│   ├── readings.latestDate  string  ISO-8601 date
+│   ├── readings.history     string  JSON array of all readings
 │   ├── name                 string
 │   ├── unit                 string
 │   └── typeName             string
 │
 └── nodes/{MAC}/
-    ├── ip          string  IP-Adresse des ESP32
-    ├── name        string  Gerätename
-    ├── version     string  Firmware-Version
-    ├── lastSeen    number  Timestamp letzter Heartbeat (ms)
-    ├── config      string  JSON-Config (Adapter schreibt, ESP32 liest)
-    ├── configAck   string  Quittierung durch ESP32
-    └── cmd         string  Sofortbefehl (Adapter schreibt, ESP32 liest+löscht)
+    ├── ip          string  ESP32 IP address
+    ├── name        string  Device name
+    ├── version     string  Firmware version
+    ├── lastSeen    number  Timestamp of last heartbeat (ms)
+    ├── config      string  JSON config (adapter writes, ESP32 reads)
+    ├── configAck   string  Acknowledgement by ESP32
+    └── cmd         string  Immediate command (adapter writes, ESP32 reads+clears)
 ```
 
 ---
 
 ## HTTP API
 
-### Ohne Authentifizierung
+### Without authentication
 
-| Methode | Pfad | Beschreibung |
+| Method | Path | Description |
 |---|---|---|
-| GET | `/` | Web-UI |
-| GET | `/api/version` | Version + GitHub-Check |
-| GET | `/api/stats` | Statistiken (Ablesungen, Uptime, Nodes) |
-| GET | `/api/data` | Alle gecachten Ablesungen |
-| GET | `/api/logs` | Log-Buffer (mit `?level=&category=&text=` Filter) |
-| GET | `/api/nodes` | Alle registrierten ESP32-Nodes |
-| GET | `/api/discover` | Bekannte Zähler-State-IDs |
-| POST | `/api/register` | ESP32 Heartbeat (kein Auth nötig) |
-| POST | `/api/update` | Adapter-Update starten |
+| GET | `/` | Web UI |
+| GET | `/api/version` | Version + GitHub check |
+| GET | `/api/stats` | Statistics (readings, uptime, nodes) |
+| GET | `/api/data` | All cached readings |
+| GET | `/api/logs` | Log buffer (with `?level=&category=&text=` filter) |
+| GET | `/api/nodes` | All registered ESP32 nodes |
+| GET | `/api/discover` | Known meter state IDs |
+| POST | `/api/register` | ESP32 heartbeat (no auth required) |
+| POST | `/api/update` | Start adapter update |
 
-### Mit Basic Auth
+### With Basic Auth
 
-| Methode | Pfad | Beschreibung |
+| Method | Path | Description |
 |---|---|---|
-| GET | `/api/ping` | Verbindungstest |
-| POST | `/api/reading` | Einzelne Ablesung speichern |
-| POST | `/api/readings` | Batch-Ablesungen speichern |
-| POST | `/api/import` | App-Backup importieren |
-| GET | `/api/nodes/{MAC}/config` | Config für ESP32 abrufen |
-| POST | `/api/nodes/{MAC}/config` | Config für ESP32 setzen |
-| POST | `/api/nodes/{MAC}/configAck` | Config-Quittierung empfangen |
-| POST | `/api/nodes/{MAC}/cmd` | Sofortbefehl senden (LED, Zähler) |
+| GET | `/api/ping` | Connection test |
+| POST | `/api/reading` | Store single reading |
+| POST | `/api/readings` | Store batch readings |
+| POST | `/api/import` | Import app backup |
+| GET | `/api/nodes/{MAC}/config` | Get config for ESP32 |
+| POST | `/api/nodes/{MAC}/config` | Set config for ESP32 |
+| POST | `/api/nodes/{MAC}/configAck` | Receive config acknowledgement |
+| POST | `/api/nodes/{MAC}/cmd` | Send immediate command (LED, meter) |
 
-### Beispiel: Einzelne Ablesung
+### Example: single reading
 
 ```
 POST http://host:8089/api/reading
-Authorization: Basic base64(user:passwort)
+Authorization: Basic base64(user:password)
 Content-Type: application/json
 
 {
-  "house":       "MeinHaus",
-  "apartment":   "Westerheim",
-  "meter":       "Warmwasser",
+  "house":       "MyHouse",
+  "apartment":   "West",
+  "meter":       "HotWater",
   "value":       128.75,
   "unit":        "m³",
   "typeName":    "HotWater",
@@ -225,11 +225,11 @@ Content-Type: application/json
 }
 ```
 
-### Beispiel: Sofortbefehl an ESP32
+### Example: immediate command to ESP32
 
 ```
 POST http://host:8089/api/nodes/C8C9A3CB7B08/cmd
-Authorization: Basic base64(user:passwort)
+Authorization: Basic base64(user:password)
 Content-Type: application/json
 
 { "ledOn": true }
@@ -239,47 +239,50 @@ Content-Type: application/json
 
 ## Update
 
-### Über die Web-UI (empfohlen)
-`http://IP:8089/` → Tab **⚙️ System** → „Auf Updates prüfen" → „Update installieren"
+### Via Web UI (recommended)
+`http://IP:8089/` → **System** tab → "Check for updates" → "Install update"
 
-### Kommandozeile
+### Command line
 
 ```bash
 iobroker url https://github.com/MPunktBPunkt/iobroker.metermaster
 iobroker restart metermaster.0
 ```
 
-**Beispiel-Output (Ubuntu LXC):**
-
-```
-root@IoBroker:~# iobroker url https://github.com/MPunktBPunkt/iobroker.metermaster
-install MPunktBPunkt/iobroker.metermaster#<commit-hash>
-NPM version: 11.x.x
-Installing MPunktBPunkt/iobroker.metermaster... (System call)
-changed 1 package in 11s
-upload [1] metermaster.admin .../admin/jsonConfig.json
-upload [0] metermaster.admin .../admin/metermaster.svg
-Updating objects from io-package.json for adapter "metermaster" with version "0.8.2"
-Update "system.adapter.metermaster.0"
-
-root@IoBroker:~# iobroker restart metermaster.0
-The adapter "metermaster.0" was started.
-
-root@IoBroker:~# cat /opt/iobroker/node_modules/iobroker.metermaster/package.json | grep '"version"'
-  "version": "0.8.2",
-```
-
-> **Hinweis:** Die Meldung `[DEP0169] DeprecationWarning: url.parse()` ist harmlos und kommt vom ioBroker-CLI selbst, nicht vom Adapter.
-
-### Version prüfen nach Update
+### Verify version after update
 
 ```bash
 sed -n '9p' /opt/iobroker/node_modules/iobroker.metermaster/main.js
-# Erwartet: const CURRENT_VERSION = '0.8.2';
+# Expected: const CURRENT_VERSION = '0.9.0';
 ```
 
 ---
 
-## Lizenz
+## Changelog
 
-MIT © MPunktBPunkt
+### 0.9.0
+- Finalized for ioBroker repository: CI/CD testing, adapter checker compliance
+- English README, updated dependencies (Node.js >= 20, adapter-core 3.4.x)
+- Admin config i18n, encrypted password storage
+
+### 0.8.3
+- Chart: linear time axis, yearly consumption projection toggle, README screenshots
+
+### 0.8.2
+- Bugfix: chart modal close button and range filters
+
+### 0.8.1
+- Bugfix: literal newline in CSV export JS broke Web UI
+
+### 0.8.0
+- Charts per meter, consumption KPI, CSV export, DE/EN language switch
+
+See [io-package.json](io-package.json) `common.news` for full history.
+
+---
+
+## License
+
+MIT © [MPunktBPunkt](https://github.com/MPunktBPunkt)
+
+See [LICENSE](LICENSE) for the full license text.
