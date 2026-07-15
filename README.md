@@ -2,7 +2,7 @@
 
 [![MeterMaster Banner](https://github.com/MPunktBPunkt/ioBroker.metermaster/raw/main/github-banner.svg)](https://github.com/MPunktBPunkt/ioBroker.metermaster)
 
-[![Version](https://img.shields.io/badge/version-0.9.0-blue.svg)](https://github.com/MPunktBPunkt/ioBroker.metermaster)
+[![Version](https://img.shields.io/badge/version-0.9.1-blue.svg)](https://github.com/MPunktBPunkt/ioBroker.metermaster)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/MPunktBPunkt/ioBroker.metermaster/blob/main/LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D22-brightgreen.svg)](https://nodejs.org)
 
@@ -247,11 +247,14 @@ iobroker restart metermaster.0
 
 ## Changelog
 
+### 0.9.1
+- Lowered admin dependency to >=7.6.20 (fixes startup when admin 7.7.x is installed)
+
 ### 0.9.0
 - Finalized for ioBroker repository: CI/CD testing, adapter checker compliance
 - English README, updated dependencies (Node.js >= 22, adapter-core 3.4.x)
 - Admin config i18n, encrypted password storage
-- Requires js-controller >= 6.0.11 and admin >= 7.8.23
+- Requires js-controller >= 6.0.11 and admin >= 7.6.20
 
 ### 0.8.3
 - Chart: linear time axis, yearly consumption projection toggle, README screenshots

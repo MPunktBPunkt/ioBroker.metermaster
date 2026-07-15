@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "metermaster",
-    "version": "0.9.0",
+    "version": "0.9.1",
     "news": {
+      "0.9.1": {
+        "en": "Lowered admin dependency to >=7.6.20 (fixes startup with admin 7.7.x)",
+        "de": "Admin-Abhängigkeit auf >=7.6.20 gesenkt (behebt Start mit admin 7.7.x)",
+        "ru": "Снижена зависимость admin до >=7.6.20 (исправлен запуск с admin 7.7.x)",
+        "pt": "Dependência admin reduzida para >=7.6.20 (corrige inicialização com admin 7.7.x)",
+        "nl": "Admin-afhankelijkheid verlaagd naar >=7.6.20 (lost opstarten met admin 7.7.x op)",
+        "fr": "Dépendance admin abaissée à >=7.6.20 (corrige le démarrage avec admin 7.7.x)",
+        "it": "Dipendenza admin ridotta a >=7.6.20 (corregge avvio con admin 7.7.x)",
+        "es": "Dependencia admin reducida a >=7.6.20 (corrige inicio con admin 7.7.x)",
+        "pl": "Obniżono zależność admin do >=7.6.20 (naprawia start z admin 7.7.x)",
+        "uk": "Знижено залежність admin до >=7.6.20 (виправлено запуск з admin 7.7.x)",
+        "zh-cn": "降低 admin 依赖至 >=7.6.20（修复 admin 7.7.x 下无法启动）"
+      },
       "0.9.0": {
         "en": "Finalized for ioBroker repository: CI/CD testing, adapter checker compliance, English README, updated dependencies",
         "de": "Finalisiert für ioBroker-Repository: CI/CD-Tests, Adapter-Checker-Konformität, englisches README, aktualisierte Abhängigkeiten",
@@ -80,19 +93,6 @@
         "pl": "Modal logowania dla auth, najnowsze logi na górze",
         "uk": "Модальне вікно входу для auth, найновіші логи зверху",
         "zh-cn": "登录模态框认证，最新日志在顶部"
-      },
-      "0.7.5": {
-        "en": "Bugfix: Emoji Surrogate-Pairs in TYPE_ICONS and copyCmd JS strings (SyntaxError in browser)",
-        "de": "Bugfix: Emoji Surrogate-Pairs in TYPE_ICONS und copyCmd JS-Strings (SyntaxError im Browser)",
-        "ru": "Исправление: суррогатные пары Emoji в TYPE_ICONS и copyCmd JS",
-        "pt": "Correção: pares substitutos Emoji em TYPE_ICONS e copyCmd JS",
-        "nl": "Bugfix: Emoji-surrogaatparen in TYPE_ICONS en copyCmd JS",
-        "fr": "Correction : paires de substitution Emoji dans TYPE_ICONS et copyCmd JS",
-        "it": "Bugfix: coppie surrogato Emoji in TYPE_ICONS e copyCmd JS",
-        "es": "Corrección: pares sustitutos Emoji en TYPE_ICONS y copyCmd JS",
-        "pl": "Poprawka: pary zastępcze Emoji w TYPE_ICONS i copyCmd JS",
-        "uk": "Виправлення: сурогатні пари Emoji в TYPE_ICONS та copyCmd JS",
-        "zh-cn": "修复：TYPE_ICONS 和 copyCmd JS 中的 Emoji 代理对"
       }
     },
     "titleLang": {
@@ -156,7 +156,7 @@
     ],
     "globalDependencies": [
       {
-        "admin": ">=7.8.23"
+        "admin": ">=7.6.20"
       }
     ]
   },

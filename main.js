@@ -6,7 +6,7 @@ const crypto = require('node:crypto');
 const https  = require('node:https');
 const { exec } = require('node:child_process');
 
-const CURRENT_VERSION = '0.9.0';
+const CURRENT_VERSION = '0.9.1';
 const GITHUB_REPO     = 'MPunktBPunkt/ioBroker.metermaster';
 const GITHUB_URL      = 'https://github.com/MPunktBPunkt/ioBroker.metermaster';
 
