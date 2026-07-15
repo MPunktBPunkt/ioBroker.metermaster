@@ -277,4 +277,8 @@ MIT License – see [LICENSE](LICENSE) for the full license text.
 
 MIT © MPunktBPunkt
 
-[Older changelogs can be found there](CHANGELOG_OLD.md)
+## Changelog
+
+### **WORK IN PROGRESS**
+- (ioBroker-Bot) Adapter requires admin >= 7.8.23 now.
+
