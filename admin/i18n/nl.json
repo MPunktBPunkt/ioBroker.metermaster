@@ -1,0 +1,14 @@
+{
+  "port": "HTTP-poort",
+  "port_help": "Poort waarop de adapter luistert. Standaard: 8089",
+  "user": "Gebruikersnaam",
+  "user_help": "Basic Auth gebruikersnaam (moet overeenkomen met de MeterMaster app-configuratie)",
+  "password": "Wachtwoord",
+  "password_help": "Basic Auth wachtwoord",
+  "verboseLogging": "Uitgebreide logging",
+  "verboseLogging_help": "DEBUG-items tonen in de Web-UI logviewer",
+  "logBufferSize": "Logbuffer (items)",
+  "logBufferSize_help": "Maximaal aantal opgeslagen logitems in de Web-UI",
+  "keepHistory": "Geschiedenis bewaren",
+  "keepHistory_help": "0 = onbeperkt; anders max. aantal items per meter in readings.history"
+}
