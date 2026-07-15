@@ -1,0 +1,14 @@
+{
+  "port": "Puerto HTTP",
+  "port_help": "Puerto en el que escucha el adaptador. Predeterminado: 8089",
+  "user": "Nombre de usuario",
+  "user_help": "Usuario Basic Auth (debe coincidir con la configuración de la app MeterMaster)",
+  "password": "Contraseña",
+  "password_help": "Contraseña Basic Auth",
+  "verboseLogging": "Registro detallado",
+  "verboseLogging_help": "Mostrar entradas DEBUG en el visor de logs de la Web-UI",
+  "logBufferSize": "Búfer de logs (entradas)",
+  "logBufferSize_help": "Número máximo de entradas de log almacenadas en la Web-UI",
+  "keepHistory": "Conservar historial",
+  "keepHistory_help": "0 = ilimitado; de lo contrario, máx. entradas por contador en readings.history"
+}

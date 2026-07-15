@@ -1,69 +1,125 @@
 {
   "common": {
     "name": "metermaster",
-    "version": "0.8.3",
+    "version": "0.9.0",
     "news": {
+      "0.9.0": {
+        "en": "Finalized for ioBroker repository: CI/CD testing, adapter checker compliance, English README, updated dependencies",
+        "de": "Finalisiert für ioBroker-Repository: CI/CD-Tests, Adapter-Checker-Konformität, englisches README, aktualisierte Abhängigkeiten",
+        "ru": "Финализация для репозитория ioBroker: CI/CD-тестирование, соответствие проверке адаптера, README на английском, обновлённые зависимости",
+        "pt": "Finalizado para o repositório ioBroker: testes CI/CD, conformidade com o verificador de adaptadores, README em inglês, dependências atualizadas",
+        "nl": "Afgerond voor ioBroker-repository: CI/CD-tests, naleving adapter-checker, Engelstalige README, bijgewerkte afhankelijkheden",
+        "fr": "Finalisé pour le dépôt ioBroker : tests CI/CD, conformité au vérificateur d'adaptateurs, README en anglais, dépendances mises à jour",
+        "it": "Finalizzato per il repository ioBroker: test CI/CD, conformità al checker degli adapter, README in inglese, dipendenze aggiornate",
+        "es": "Finalizado para el repositorio ioBroker: pruebas CI/CD, cumplimiento del verificador de adaptadores, README en inglés, dependencias actualizadas",
+        "pl": "Sfinalizowano dla repozytorium ioBroker: testy CI/CD, zgodność z adapter checker, angielskie README, zaktualizowane zależności",
+        "uk": "Фіналізовано для репозиторію ioBroker: CI/CD-тестування, відповідність перевірці адаптера, README англійською, оновлені залежності",
+        "zh-cn": "为 ioBroker 仓库完成最终化：CI/CD 测试、适配器检查器合规、英文 README、更新依赖项"
+      },
       "0.8.3": {
         "en": "Chart: linear time axis, yearly consumption projection toggle, README screenshots",
-        "de": "Chart: lineare Zeitachse, Jahresverbrauch-Hochrechnung, README-Screenshots"
+        "de": "Chart: lineare Zeitachse, Jahresverbrauch-Hochrechnung, README-Screenshots",
+        "ru": "График: линейная временная ось, переключатель годового прогноза потребления, скриншоты README",
+        "pt": "Gráfico: eixo de tempo linear, alternância de projeção de consumo anual, capturas de tela no README",
+        "nl": "Grafiek: lineaire tijdas, schakelaar voor jaarlijks verbruiksprognose, README-screenshots",
+        "fr": "Graphique : axe temporel linéaire, bascule de projection de consommation annuelle, captures README",
+        "it": "Grafico: asse temporale lineare, opzione proiezione consumo annuale, screenshot README",
+        "es": "Gráfico: eje de tiempo lineal, alternancia de proyección de consumo anual, capturas README",
+        "pl": "Wykres: liniowa oś czasu, przełącznik prognozy rocznego zużycia, zrzuty ekranu README",
+        "uk": "Графік: лінійна часова вісь, перемикач річного прогнозу споживання, скріншоти README",
+        "zh-cn": "图表：线性时间轴、年度消耗预测切换、README 截图"
       },
       "0.8.2": {
         "en": "Bugfix: chart modal close button and range filters (modals moved before script init)",
-        "de": "Bugfix: Chart-Modal X-Schliessen und Zeitraum-Buttons (Modals vor Script-Init)"
+        "de": "Bugfix: Chart-Modal X-Schliessen und Zeitraum-Buttons (Modals vor Script-Init)",
+        "ru": "Исправление: кнопка закрытия модального окна графика и фильтры диапазона",
+        "pt": "Correção: botão de fechar do modal do gráfico e filtros de intervalo",
+        "nl": "Bugfix: sluitknop grafiekmodal en bereikfilters",
+        "fr": "Correction : bouton de fermeture du modal graphique et filtres de plage",
+        "it": "Bugfix: pulsante chiusura modale grafico e filtri intervallo",
+        "es": "Corrección: botón cerrar del modal de gráfico y filtros de rango",
+        "pl": "Poprawka: przycisk zamykania modala wykresu i filtry zakresu",
+        "uk": "Виправлення: кнопка закриття модального вікна графіка та фільтри діапазону",
+        "zh-cn": "修复：图表模态框关闭按钮和范围过滤器"
       },
       "0.8.1": {
         "en": "Bugfix: literal newline in CSV export JS broke entire Web-UI (SyntaxError)",
-        "de": "Bugfix: Literal-Zeilenumbruch im CSV-Export-JS brach gesamte Web-UI (SyntaxError)"
+        "de": "Bugfix: Literal-Zeilenumbruch im CSV-Export-JS brach gesamte Web-UI (SyntaxError)",
+        "ru": "Исправление: литеральный перевод строки в JS экспорта CSV ломал Web-UI",
+        "pt": "Correção: quebra de linha literal no JS de exportação CSV quebrava a Web-UI",
+        "nl": "Bugfix: letterlijke regeleinde in CSV-export-JS brak de hele Web-UI",
+        "fr": "Correction : saut de ligne littéral dans le JS d'export CSV cassait la Web-UI",
+        "it": "Bugfix: newline letterale nel JS di export CSV rompeva l'intera Web-UI",
+        "es": "Corrección: salto de línea literal en JS de exportación CSV rompía la Web-UI",
+        "pl": "Poprawka: dosłowny znak nowej linii w JS eksportu CSV psuł całą Web-UI",
+        "uk": "Виправлення: літеральний перенос рядка в JS експорту CSV ламав Web-UI",
+        "zh-cn": "修复：CSV 导出 JS 中的字面换行符导致 Web-UI 语法错误"
       },
       "0.8.0": {
         "en": "Charts per meter (Chart.js modal), consumption KPI, CSV export, DE/EN language switch, TotalWater/HeatMeter icons",
-        "de": "Charts pro Zaehler (Chart.js-Modal), Verbrauchs-KPI, CSV-Export, Sprachumschalter DE/EN, TotalWater/HeatMeter Icons"
-      },
-      "0.7.5": {
-        "en": "Bugfix: Emoji Surrogate-Pairs in TYPE_ICONS and copyCmd JS strings (SyntaxError in browser)",
-        "de": "Bugfix: Emoji Surrogate-Pairs in TYPE_ICONS und copyCmd JS-Strings (SyntaxError im Browser)"
-      },
-      "0.7.1": {
-        "en": "Bugfix: Emoji Surrogate-Pairs in JS strings (SyntaxError); all onclick functions on window scope (ReferenceError)",
-        "de": "Bugfix: Emoji Surrogate-Pairs in JS-Strings (SyntaxError); alle onclick-Funktionen im window-Scope (ReferenceError)"
-      },
-      "0.7.0": {
-        "en": "ESP32 cmd commands (LED, meter switch), sendNodeCmd in Web-UI Nodes tab",
-        "de": "ESP32 cmd-Befehle (LED, Zählerwechsel), sendNodeCmd im Web-UI Nodes-Tab"
-      },
-      "0.6.0": {
-        "en": "ESP32 node registration via direct adapter API (POST /api/register), configAck, cmd state",
-        "de": "ESP32 Node-Registrierung direkt am Adapter (POST /api/register), configAck, cmd-State"
-      },
-      "0.5.0": {
-        "en": "ESP32 node management: nodesCache, Nodes tab, /api/nodes, /api/discover, statistics dashboard",
-        "de": "ESP32 Node-Verwaltung: nodesCache, Nodes-Tab, /api/nodes, /api/discover, Statistik-Dashboard"
-      },
-      "0.4.0": {
-        "en": "GitHub version check with releases/tags fallback, update commands with clipboard copy, favicon 204",
-        "de": "GitHub-Versionscheck mit Releases/Tags-Fallback, Update-Befehle mit Clipboard-Copy, favicon 204"
-      },
-      "0.3.1": {
-        "en": "Bugfix: literal newlines in template strings causing SyntaxError in browser",
-        "de": "Bugfix: Literal-Zeilenumbrüche in Template-Strings verursachten SyntaxError im Browser"
-      },
-      "0.1.0": {
-        "en": "Initial release: HTTP receiver, Web-UI, log viewer, app import",
-        "de": "Erstveröffentlichung: HTTP-Empfänger, Web-UI, Log-Viewer, App-Import"
+        "de": "Charts pro Zaehler (Chart.js-Modal), Verbrauchs-KPI, CSV-Export, Sprachumschalter DE/EN, TotalWater/HeatMeter Icons",
+        "ru": "Графики по счётчикам, KPI потребления, экспорт CSV, переключатель DE/EN, иконки TotalWater/HeatMeter",
+        "pt": "Gráficos por medidor, KPI de consumo, exportação CSV, alternância DE/EN, ícones TotalWater/HeatMeter",
+        "nl": "Grafieken per meter, verbruiks-KPI, CSV-export, DE/EN-taalschakelaar, TotalWater/HeatMeter-iconen",
+        "fr": "Graphiques par compteur, KPI de consommation, export CSV, bascule DE/EN, icônes TotalWater/HeatMeter",
+        "it": "Grafici per contatore, KPI consumo, export CSV, switch lingua DE/EN, icone TotalWater/HeatMeter",
+        "es": "Gráficos por medidor, KPI de consumo, exportación CSV, cambio DE/EN, iconos TotalWater/HeatMeter",
+        "pl": "Wykresy na licznik, KPI zużycia, eksport CSV, przełącznik DE/EN, ikony TotalWater/HeatMeter",
+        "uk": "Графіки на лічильник, KPI споживання, експорт CSV, перемикач DE/EN, іконки TotalWater/HeatMeter",
+        "zh-cn": "每表图表、消耗 KPI、CSV 导出、DE/EN 语言切换、TotalWater/HeatMeter 图标"
       },
       "0.7.6": {
         "en": "Login modal for auth (no more browser prompt), newest logs on top",
-        "de": "Login-Modal fuer Auth (kein Browser-Prompt mehr), neueste Logs oben"
+        "de": "Login-Modal fuer Auth (kein Browser-Prompt mehr), neueste Logs oben",
+        "ru": "Модальное окно входа для аутентификации, новейшие логи сверху",
+        "pt": "Modal de login para autenticação, logs mais recentes no topo",
+        "nl": "Loginmodal voor auth, nieuwste logs bovenaan",
+        "fr": "Modal de connexion pour l'auth, journaux les plus récents en haut",
+        "it": "Modale login per auth, log più recenti in alto",
+        "es": "Modal de inicio de sesión para auth, logs más recientes arriba",
+        "pl": "Modal logowania dla auth, najnowsze logi na górze",
+        "uk": "Модальне вікно входу для auth, найновіші логи зверху",
+        "zh-cn": "登录模态框认证，最新日志在顶部"
+      },
+      "0.7.5": {
+        "en": "Bugfix: Emoji Surrogate-Pairs in TYPE_ICONS and copyCmd JS strings (SyntaxError in browser)",
+        "de": "Bugfix: Emoji Surrogate-Pairs in TYPE_ICONS und copyCmd JS-Strings (SyntaxError im Browser)",
+        "ru": "Исправление: суррогатные пары Emoji в TYPE_ICONS и copyCmd JS",
+        "pt": "Correção: pares substitutos Emoji em TYPE_ICONS e copyCmd JS",
+        "nl": "Bugfix: Emoji-surrogaatparen in TYPE_ICONS en copyCmd JS",
+        "fr": "Correction : paires de substitution Emoji dans TYPE_ICONS et copyCmd JS",
+        "it": "Bugfix: coppie surrogato Emoji in TYPE_ICONS e copyCmd JS",
+        "es": "Corrección: pares sustitutos Emoji en TYPE_ICONS y copyCmd JS",
+        "pl": "Poprawka: pary zastępcze Emoji w TYPE_ICONS i copyCmd JS",
+        "uk": "Виправлення: сурогатні пари Emoji в TYPE_ICONS та copyCmd JS",
+        "zh-cn": "修复：TYPE_ICONS 和 copyCmd JS 中的 Emoji 代理对"
       }
     },
-    "title": "MeterMaster",
     "titleLang": {
       "en": "MeterMaster",
-      "de": "MeterMaster"
+      "de": "MeterMaster",
+      "ru": "MeterMaster",
+      "pt": "MeterMaster",
+      "nl": "MeterMaster",
+      "fr": "MeterMaster",
+      "it": "MeterMaster",
+      "es": "MeterMaster",
+      "pl": "MeterMaster",
+      "uk": "MeterMaster",
+      "zh-cn": "MeterMaster"
     },
     "desc": {
-      "en": "Receives meter readings from the MeterMaster Android App and manages ESP32 display nodes",
-      "de": "Empfängt Zählerablesungen von der MeterMaster Android-App und verwaltet ESP32 Display-Nodes"
+      "en": "Receives meter readings from the MeterMaster Android app and manages ESP32 display nodes",
+      "de": "Empfängt Zählerablesungen von der MeterMaster Android-App und verwaltet ESP32 Display-Nodes",
+      "ru": "Принимает показания счётчиков из Android-приложения MeterMaster и управляет ESP32 display nodes",
+      "pt": "Recebe leituras de medidores do app Android MeterMaster e gerencia nós de display ESP32",
+      "nl": "Ontvangt meterstanden van de MeterMaster Android-app en beheert ESP32 display nodes",
+      "fr": "Reçoit les relevés de compteurs de l'app Android MeterMaster et gère les nœuds d'affichage ESP32",
+      "it": "Riceve letture contatori dall'app Android MeterMaster e gestisce nodi display ESP32",
+      "es": "Recibe lecturas de contadores de la app Android MeterMaster y gestiona nodos de display ESP32",
+      "pl": "Odbiera odczyty liczników z aplikacji Android MeterMaster i zarządza węzłami wyświetlacza ESP32",
+      "uk": "Отримує показники лічильників з Android-додатку MeterMaster та керує ESP32 display nodes",
+      "zh-cn": "接收 MeterMaster Android 应用的表计读数并管理 ESP32 显示节点"
     },
     "authors": [
       "MPunktBPunkt"
@@ -75,18 +131,30 @@
       "esp32",
       "display"
     ],
-    "license": "MIT",
+    "licenseInformation": {
+      "type": "free",
+      "license": "MIT"
+    },
     "mode": "daemon",
     "type": "general",
     "icon": "metermaster.svg",
     "enabled": true,
-    "extIcon": "https://raw.githubusercontent.com/MPunktBPunkt/iobroker.metermaster/main/admin/metermaster.svg",
-    "readme": "https://github.com/MPunktBPunkt/iobroker.metermaster/blob/main/README.md",
-    "allowInit": true,
-    "compact": false,
+    "extIcon": "https://raw.githubusercontent.com/MPunktBPunkt/ioBroker.metermaster/main/admin/metermaster.svg",
+    "readme": "https://github.com/MPunktBPunkt/ioBroker.metermaster/blob/main/README.md",
+    "compact": true,
     "adminUI": {
       "config": "json"
-    }
+    },
+    "dependencies": [
+      {
+        "js-controller": ">=6.0.11"
+      }
+    ],
+    "globalDependencies": [
+      {
+        "admin": ">=7.6.20"
+      }
+    ]
   },
   "native": {
     "port": 8089,
@@ -96,6 +164,12 @@
     "logBufferSize": 500,
     "keepHistory": 0
   },
+  "encryptedNative": [
+    "password"
+  ],
+  "protectedNative": [
+    "password"
+  ],
   "objects": [],
   "instanceObjects": [
     {
@@ -110,7 +184,7 @@
       "_id": "info.connection",
       "type": "state",
       "common": {
-        "name": "Adapter verbunden",
+        "name": "Adapter connected",
         "type": "boolean",
         "role": "indicator.connected",
         "read": true,
@@ -123,12 +197,12 @@
       "_id": "info.lastSync",
       "type": "state",
       "common": {
-        "name": "Letzter Sync",
-        "type": "string",
+        "name": "Last sync",
+        "type": "number",
         "role": "value.time",
         "read": true,
         "write": false,
-        "def": ""
+        "def": 0
       },
       "native": {}
     },
@@ -136,7 +210,7 @@
       "_id": "info.readingsReceived",
       "type": "state",
       "common": {
-        "name": "Ablesungen empfangen",
+        "name": "Readings received",
         "type": "number",
         "role": "value",
         "read": true,
