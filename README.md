@@ -251,7 +251,7 @@ iobroker restart metermaster.0
 - Finalized for ioBroker repository: CI/CD testing, adapter checker compliance
 - English README, updated dependencies (Node.js >= 22, adapter-core 3.4.x)
 - Admin config i18n, encrypted password storage
-- Requires js-controller >= 6.0.11
+- Requires js-controller >= 6.0.11 and admin >= 7.8.23
 
 ### 0.8.3
 - Chart: linear time axis, yearly consumption projection toggle, README screenshots
@@ -265,7 +265,7 @@ iobroker restart metermaster.0
 ### 0.8.0
 - Charts per meter, consumption KPI, CSV export, DE/EN language switch
 
-See [io-package.json](io-package.json) `common.news` for full history.
+See [io-package.json](io-package.json) `common.news` for full history. Older entries: [CHANGELOG_OLD.md](CHANGELOG_OLD.md).
 
 ---
 
@@ -274,11 +274,4 @@ See [io-package.json](io-package.json) `common.news` for full history.
 Copyright (c) 2026 MPunktBPunkt
 
 MIT License – see [LICENSE](LICENSE) for the full license text.
-
-MIT © MPunktBPunkt
-
-## Changelog
-
-### **WORK IN PROGRESS**
-- (ioBroker-Bot) Adapter requires admin >= 7.8.23 now.
 
