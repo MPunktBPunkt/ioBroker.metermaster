@@ -131,10 +131,8 @@
       "esp32",
       "display"
     ],
-    "licenseInformation": {
-      "license": "MIT",
-      "type": "free"
-    },
+    "tier": 2,
+    "license": "MIT",
     "mode": "daemon",
     "type": "general",
     "connectionType": "local",
