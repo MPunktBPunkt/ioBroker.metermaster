@@ -275,3 +275,6 @@ Copyright (c) 2026 MPunktBPunkt
 
 MIT License – see [LICENSE](LICENSE) for the full license text.
 
+MIT © MPunktBPunkt
+
+[Older changelogs can be found there](CHANGELOG_OLD.md)
