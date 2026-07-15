@@ -1,0 +1,14 @@
+{
+  "port": "Порт HTTP",
+  "port_help": "Порт, на котором работает адаптер. По умолчанию: 8089",
+  "user": "Имя пользователя",
+  "user_help": "Имя пользователя Basic Auth (должно совпадать с настройками приложения MeterMaster)",
+  "password": "Пароль",
+  "password_help": "Пароль Basic Auth",
+  "verboseLogging": "Подробное логирование",
+  "verboseLogging_help": "Показывать записи DEBUG в просмотрщике логов Web-UI",
+  "logBufferSize": "Буфер логов (записи)",
+  "logBufferSize_help": "Максимальное количество сохранённых записей логов в Web-UI",
+  "keepHistory": "Хранить историю",
+  "keepHistory_help": "0 = без ограничений; иначе макс. количество записей на счётчик в readings.history"
+}

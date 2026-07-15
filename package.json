@@ -1,29 +1,52 @@
 {
   "name": "iobroker.metermaster",
-  "version": "0.8.3",
-  "description": "ioBroker Adapter for the MeterMaster Android App – receives meter readings and manages ESP32 display nodes",
+  "version": "0.9.0",
+  "description": "ioBroker adapter for the MeterMaster Android app – receives meter readings and manages ESP32 display nodes",
   "author": {
     "name": "MPunktBPunkt",
     "url": "https://github.com/MPunktBPunkt"
   },
-  "homepage": "https://github.com/MPunktBPunkt/iobroker.metermaster",
+  "homepage": "https://github.com/MPunktBPunkt/ioBroker.metermaster",
   "license": "MIT",
   "keywords": [
     "ioBroker",
     "meter",
     "reading",
     "smart home",
-    "esp32"
+    "esp32",
+    "energy"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MPunktBPunkt/ioBroker.metermaster.git"
+  },
+  "bugs": {
+    "url": "https://github.com/MPunktBPunkt/ioBroker.metermaster/issues"
+  },
   "main": "main.js",
   "engines": {
-    "node": ">=16"
+    "node": ">=22"
   },
   "scripts": {
-    "start": "node main.js"
+    "test:package": "node node_modules/@iobroker/testing/node_modules/mocha/bin/mocha.js test/package --exit",
+    "test:integration": "node node_modules/@iobroker/testing/node_modules/mocha/bin/mocha.js test/integration --exit",
+    "test": "npm run test:package && npm run test:integration",
+    "lint": "eslint ."
   },
   "dependencies": {
-    "@iobroker/adapter-core": "^3.0.0"
+    "@iobroker/adapter-core": "^3.4.1"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@iobroker/adapter-dev": "^1.5.0",
+    "@iobroker/eslint-config": "^2.3.4",
+    "@iobroker/testing": "^5.2.2"
+  },
+  "files": [
+    "admin{,/!(src)/**}/!(tsconfig|tsconfig.*).json",
+    "admin{,/!(src)/**}/*.{html,css,png,svg,jpg,js}",
+    "io-package.json",
+    "main.js",
+    "LICENSE",
+    "README.md"
+  ]
 }
