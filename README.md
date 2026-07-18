@@ -2,7 +2,7 @@
 
 [![MeterMaster Banner](https://github.com/MPunktBPunkt/ioBroker.metermaster/raw/main/github-banner.svg)](https://github.com/MPunktBPunkt/ioBroker.metermaster)
 
-[![Version](https://img.shields.io/badge/version-0.9.1-blue.svg)](https://github.com/MPunktBPunkt/ioBroker.metermaster)
+[![Version](https://img.shields.io/badge/version-0.9.2-blue.svg)](https://github.com/MPunktBPunkt/ioBroker.metermaster)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/MPunktBPunkt/ioBroker.metermaster/blob/main/LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D22-brightgreen.svg)](https://nodejs.org)
 
@@ -246,6 +246,10 @@ iobroker restart metermaster.0
 ---
 
 ## Changelog
+
+### 0.9.2
+- Adapter checker compliance: npm news cleanup, devDependencies, trusted publishing
+- npm publish via GitHub Actions with provenance
 
 ### 0.9.1
 - Lowered admin dependency to >=7.6.20 (fixes startup when admin 7.7.x is installed)
