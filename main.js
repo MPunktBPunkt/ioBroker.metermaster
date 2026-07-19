@@ -6,7 +6,7 @@ const crypto = require('node:crypto');
 const https  = require('node:https');
 const { exec } = require('node:child_process');
 
-const CURRENT_VERSION = '0.9.2';
+const CURRENT_VERSION = '0.9.3';
 const GITHUB_REPO     = 'MPunktBPunkt/ioBroker.metermaster';
 const GITHUB_URL      = 'https://github.com/MPunktBPunkt/ioBroker.metermaster';
 
@@ -81,6 +81,7 @@ adapter.on('ready', async () => {
     // In-Memory-Cache aus gespeicherten ioBroker-States wiederherstellen
     await restoreCacheFromStates();
     await restoreNodesFromStates();
+    await migrateStateRoles();
 
     // ESP32-Node-States beobachten (Heartbeat-Erkennung via simple-api)
     adapter.subscribeStates('nodes.*');
@@ -215,11 +216,11 @@ async function ensureNodeStates(mac) {
     await ensureChannel(base,         `ESP32 Node ${mac}`);
     await ensureState(`${base}.ip`,        { name: 'IP-Adresse',           type: 'string', role: 'info.ip',      read: true, write: false });
     await ensureState(`${base}.name`,      { name: 'Gerätename',           type: 'string', role: 'info.name',    read: true, write: false });
-    await ensureState(`${base}.version`,   { name: 'Firmware-Version',     type: 'string', role: 'info.version', read: true, write: false });
-    await ensureState(`${base}.lastSeen`,  { name: 'Zuletzt gesehen (ms)', type: 'number', role: 'value.time',   read: true, write: false });
-    await ensureState(`${base}.config`,    { name: 'Konfiguration (JSON)', type: 'string', role: 'value',        read: true, write: true  });
-    await ensureState(`${base}.configAck`, { name: 'Config-Quittierung',   type: 'string', role: 'value',        read: true, write: false });
-    await ensureState(`${base}.cmd`,       { name: 'Befehl (JSON)',         type: 'string', role: 'value',        read: true, write: true  });
+    await ensureState(`${base}.version`,   { name: 'Firmware-Version',     type: 'string', role: 'info.firmware', read: true, write: false });
+    await ensureState(`${base}.lastSeen`,  { name: 'Zuletzt gesehen (ms)', type: 'number', role: 'value.time',    read: true, write: false });
+    await ensureState(`${base}.config`,    { name: 'Konfiguration (JSON)', type: 'string', role: 'json',          read: true, write: true  });
+    await ensureState(`${base}.configAck`, { name: 'Config-Quittierung',   type: 'string', role: 'json',          read: true, write: false });
+    await ensureState(`${base}.cmd`,       { name: 'Befehl (JSON)',         type: 'string', role: 'json',          read: true, write: true  });
 }
 
 // ─── HTTP-Server ──────────────────────────────────────────────────────────────
@@ -478,10 +479,10 @@ async function storeReading(data) {
     if (isNew) log(LVL.INFO, CAT.DATAPOINT, `Neuer Zähler`, `metermaster.0.${base}`);
 
     const dpNew = await ensureState(`${base}.readings.latest`,     { name: `${data.meter} – Letzter Wert`, type: 'number', role: 'value', unit: data.unit||'', read: true, write: false });
-    await ensureState(`${base}.readings.latestDate`, { name: 'Ablesedatum',          type: 'string', role: 'value.datetime', read: true, write: false });
-    await ensureState(`${base}.name`,                { name: 'Zählername',           type: 'string', role: 'info.name',      read: true, write: false });
-    await ensureState(`${base}.unit`,                { name: 'Einheit',              type: 'string', role: 'value.unit',     read: true, write: false });
-    await ensureState(`${base}.typeName`,            { name: 'Zählertyp',            type: 'string', role: 'info.type',      read: true, write: false });
+    await ensureState(`${base}.readings.latestDate`, { name: 'Ablesedatum',          type: 'string', role: 'date',      read: true, write: false });
+    await ensureState(`${base}.name`,                { name: 'Zählername',           type: 'string', role: 'info.name', read: true, write: false });
+    await ensureState(`${base}.unit`,                { name: 'Einheit',              type: 'string', role: 'text',      read: true, write: false });
+    await ensureState(`${base}.typeName`,            { name: 'Zählertyp',            type: 'string', role: 'text',      read: true, write: false });
     await ensureState(`${base}.readings.history`,    { name: 'Historische Ablesungen', type: 'array', role: 'list',          read: true, write: false });
 
     if (dpNew) log(LVL.INFO, CAT.DATAPOINT, `Datenpunkte angelegt`, `${base}.readings.{latest,latestDate,history} + name/unit/typeName`);
@@ -532,18 +533,70 @@ async function ensureChannel(id, name) {
     return true;
 }
 async function ensureState(id, common) {
+    const fullCommon = {
+        ...common,
+        read:  common.read  !== undefined ? common.read  : true,
+        write: common.write !== undefined ? common.write : false,
+        def:   common.type  === 'number'  ? 0 : (common.type === 'array' ? '[]' : '')
+    };
     const ex = await adapter.getObjectAsync(id).catch(() => null);
-    if (ex) return false;
+    if (ex) {
+        const patch = {};
+        for (const key of ['role', 'type', 'read', 'write', 'unit']) {
+            if (fullCommon[key] !== undefined && ex.common[key] !== fullCommon[key]) {
+                patch[key] = fullCommon[key];
+            }
+        }
+        if (Object.keys(patch).length) {
+            await adapter.extendObjectAsync(id, { common: patch });
+        }
+        return false;
+    }
     await adapter.setObjectNotExistsAsync(id, {
         type: 'state',
-        common: { ...common,
-            read:  common.read  !== undefined ? common.read  : true,
-            write: common.write !== undefined ? common.write : false,
-            def:   common.type  === 'number'  ? 0 : (common.type === 'array' ? '[]' : '')
-        },
+        common: fullCommon,
         native: {}
     });
     return true;
+}
+
+// ─── State-Rollen-Migration (deprecated → ioBroker-Rollenkatalog) ───────────────
+const DEPRECATED_ROLE_MAP = {
+    'value.datetime': 'date',
+    'value.unit':     'text',
+    'info.type':      'text',
+    'info.version':   'info.firmware',
+};
+
+function resolveMigratedRole(id, common) {
+    if (DEPRECATED_ROLE_MAP[common.role]) {
+        return DEPRECATED_ROLE_MAP[common.role];
+    }
+    if (common.role === 'value' && common.type === 'string') {
+        const field = id.split('.').pop();
+        if (field === 'config' || field === 'configAck' || field === 'cmd') {
+            return 'json';
+        }
+    }
+    return null;
+}
+
+async function migrateStateRoles() {
+    try {
+        const objects = await adapter.getForeignObjectsAsync('*', { type: 'state' });
+        if (!objects) return;
+        let fixed = 0;
+        for (const [id, obj] of Object.entries(objects)) {
+            const newRole = resolveMigratedRole(id, obj.common || {});
+            if (newRole && obj.common.role !== newRole) {
+                await adapter.extendObjectAsync(id, { common: { role: newRole } });
+                fixed++;
+            }
+        }
+        if (fixed) log(LVL.INFO, CAT.SYSTEM, 'State-Rollen migriert', `${fixed} Objekte`);
+    } catch (e) {
+        log(LVL.WARN, CAT.SYSTEM, 'State-Rollen-Migration fehlgeschlagen', e.message);
+    }
 }
 
 // ─── API Endpunkte ────────────────────────────────────────────────────────────

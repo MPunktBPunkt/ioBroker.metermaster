@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "metermaster",
-    "version": "0.9.2",
+    "version": "0.9.3",
     "news": {
+      "0.9.3": {
+        "en": "Fix state roles for ioBroker object structure check (date, text, json, info.firmware)",
+        "de": "State-Rollen für ioBroker-Objektstruktur-Prüfung korrigiert (date, text, json, info.firmware)",
+        "ru": "Исправлены роли states для проверки структуры объектов ioBroker",
+        "pt": "Corrigidas roles de states para verificação da estrutura de objetos ioBroker",
+        "nl": "State-rollen gecorrigeerd voor ioBroker objectstructuurcontrole",
+        "fr": "Rôles des states corrigés pour la vérification de structure d'objets ioBroker",
+        "it": "Corrette le role degli state per il controllo struttura oggetti ioBroker",
+        "es": "Corregidos roles de states para verificación de estructura de objetos ioBroker",
+        "pl": "Poprawiono role states dla kontroli struktury obiektów ioBroker",
+        "uk": "Виправлено ролі states для перевірки структури об'єктів ioBroker",
+        "zh-cn": "修复 state 角色以通过 ioBroker 对象结构检查"
+      },
       "0.9.2": {
         "en": "Adapter checker compliance: npm news cleanup, devDependencies, trusted publishing",
         "de": "Adapter-Checker-Konformität: npm-News bereinigt, devDependencies, Trusted Publishing",
