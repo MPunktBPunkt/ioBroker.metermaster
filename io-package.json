@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "metermaster",
-    "version": "0.9.3",
+    "version": "0.9.4",
     "news": {
+      "0.9.4": {
+        "en": "Review fixes: English logs/states/API errors, Web UI i18n, config validation, removed /api/update",
+        "de": "Review-Fixes: Englische Logs/States/API-Fehler, Web-UI-i18n, Config-Validierung, /api/update entfernt",
+        "ru": "Исправления review: английские логи/states/API, i18n Web UI, валидация config, удалён /api/update",
+        "pt": "Correções de review: logs/states/erros API em inglês, i18n Web UI, validação config, removido /api/update",
+        "nl": "Review-fixes: Engelse logs/states/API-fouten, Web UI i18n, config-validatie, /api/update verwijderd",
+        "fr": "Corrections review : logs/states/erreurs API en anglais, i18n Web UI, validation config, /api/update supprimé",
+        "it": "Correzioni review: log/states/errori API in inglese, i18n Web UI, validazione config, rimosso /api/update",
+        "es": "Correcciones de review: logs/states/errores API en inglés, i18n Web UI, validación config, eliminado /api/update",
+        "pl": "Poprawki review: angielskie logi/states/błędy API, i18n Web UI, walidacja config, usunięto /api/update",
+        "uk": "Виправлення review: англійські логи/states/API, i18n Web UI, валідація config, видалено /api/update",
+        "zh-cn": "审查修复：英文日志/states/API 错误、Web UI 国际化、配置验证、移除 /api/update"
+      },
       "0.9.3": {
         "en": "Fix state roles for ioBroker object structure check (date, text, json, info.firmware)",
         "de": "State-Rollen für ioBroker-Objektstruktur-Prüfung korrigiert (date, text, json, info.firmware)",
