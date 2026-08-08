@@ -4,9 +4,7 @@ const utils  = require('@iobroker/adapter-core');
 const http   = require('node:http');
 const crypto = require('node:crypto');
 const https  = require('node:https');
-const { exec } = require('node:child_process');
-
-const CURRENT_VERSION = '0.9.3';
+const CURRENT_VERSION = '0.9.4';
 const GITHUB_REPO     = 'MPunktBPunkt/ioBroker.metermaster';
 const GITHUB_URL      = 'https://github.com/MPunktBPunkt/ioBroker.metermaster';
 
@@ -64,11 +62,30 @@ function log(level, category, message, detail) {
     while (logBuffer.length > logBufferMaxSize) logBuffer.shift();
 }
 
+// ─── Config validation ─────────────────────────────────────────────────────────
+function clampInt(val, min, max, fallback) {
+    const n = parseInt(val, 10);
+    if (isNaN(n)) return fallback;
+    return Math.min(max, Math.max(min, n));
+}
+
+function getValidatedConfig() {
+    return {
+        port:          clampInt(adapter.config?.port,          1024, 65535, 8089),
+        logBufferSize: clampInt(adapter.config?.logBufferSize,  50,   5000,  500),
+        keepHistory:   clampInt(adapter.config?.keepHistory,    0,    100000, 0),
+        verboseLogging: !!adapter.config?.verboseLogging,
+        user:     (adapter.config?.user     || '').trim(),
+        password: (adapter.config?.password || '').trim(),
+    };
+}
+
 // ─── ready ────────────────────────────────────────────────────────────────────
 adapter.on('ready', async () => {
-    logBufferMaxSize = parseInt(adapter.config?.logBufferSize) || 500;
-    log(LVL.INFO, CAT.SYSTEM, `MeterMaster Adapter v${CURRENT_VERSION} gestartet`,
-        `Port: ${adapter.config.port || 8089} | Logging: ${adapter.config.verboseLogging ? 'ausführlich' : 'standard'} | Puffer: ${logBufferMaxSize}`);
+    const cfg = getValidatedConfig();
+    logBufferMaxSize = cfg.logBufferSize;
+    log(LVL.INFO, CAT.SYSTEM, `MeterMaster Adapter v${CURRENT_VERSION} started`,
+        `Port: ${cfg.port} | Logging: ${cfg.verboseLogging ? 'verbose' : 'standard'} | Buffer: ${logBufferMaxSize}`);
 
     await adapter.setStateAsync('info.connection', { val: false, ack: true });
 
@@ -90,7 +107,7 @@ adapter.on('ready', async () => {
 });
 
 adapter.on('unload', (callback) => {
-    log(LVL.INFO, CAT.SYSTEM, 'Adapter wird gestoppt');
+    log(LVL.INFO, CAT.SYSTEM, 'Adapter stopping');
     try { if (server) { server.close(() => callback()); } else { callback(); } }
     catch (e) { callback(); }
 });
@@ -99,7 +116,7 @@ adapter.on('unload', (callback) => {
 adapter.on('stateChange', async (id, state) => {
     // Eigene Writes (ack: true) ignorieren – nur externe Änderungen verarbeiten
     if (!state || state.ack) return;
-    if (!state || state.val === null) return;
+    if (state.val === null) return;
     const ns       = `${adapter.namespace}.`;
     const relative = id.startsWith(ns) ? id.slice(ns.length) : id;
     const parts    = relative.split('.');
@@ -120,7 +137,7 @@ adapter.on('stateChange', async (id, state) => {
 
     if (field === 'lastSeen') {
         const n = nodesCache[mac];
-        log(LVL.INFO, CAT.NODE, `Heartbeat`, `${mac} | IP: ${n.ip || '?'} | v${n.version || '?'} | ${n.name || 'unbenannt'}`);
+        log(LVL.INFO, CAT.NODE, `Heartbeat`, `${mac} | IP: ${n.ip || '?'} | v${n.version || '?'} | ${n.name || 'unnamed'}`);
         await ensureNodeStates(mac);
     }
 });
@@ -140,7 +157,7 @@ async function restoreCacheFromStates() {
         );
 
         if (latestKeys.length === 0) {
-            log(LVL.DEBUG, CAT.SYSTEM, 'Cache-Wiederherstellung', 'Keine gespeicherten Ablesungen gefunden');
+            log(LVL.DEBUG, CAT.SYSTEM, 'Cache restore', 'No stored readings found');
             return;
         }
 
@@ -172,9 +189,9 @@ async function restoreCacheFromStates() {
             restored++;
         }
 
-        log(LVL.INFO, CAT.SYSTEM, `Cache wiederhergestellt`, `${restored} Zähler aus ioBroker-States geladen`);
+        log(LVL.INFO, CAT.SYSTEM, `Cache restored`, `${restored} meters loaded from ioBroker states`);
     } catch (e) {
-        log(LVL.WARN, CAT.SYSTEM, 'Cache-Wiederherstellung fehlgeschlagen', e.message);
+        log(LVL.WARN, CAT.SYSTEM, 'Cache restore failed', e.message);
     }
 }
 
@@ -202,10 +219,10 @@ async function restoreNodesFromStates() {
             if (field === 'config')    nodesCache[mac].config    = String(state.val);
             if (field === 'cmd' && state.val) nodesCache[mac].cmd = String(state.val);
         }
-        if (count > 0) log(LVL.INFO, CAT.NODE, `Nodes wiederhergestellt`, `${count} ESP32-Node(s) aus States geladen`);
-        else           log(LVL.DEBUG, CAT.NODE, 'Keine registrierten Nodes gefunden');
+        if (count > 0) log(LVL.INFO, CAT.NODE, `Nodes restored`, `${count} ESP32 node(s) loaded from states`);
+        else           log(LVL.DEBUG, CAT.NODE, 'No registered nodes found');
     } catch (e) {
-        log(LVL.WARN, CAT.NODE, 'Node-Wiederherstellung fehlgeschlagen', e.message);
+        log(LVL.WARN, CAT.NODE, 'Node restore failed', e.message);
     }
 }
 
@@ -214,20 +231,21 @@ async function ensureNodeStates(mac) {
     const base = `nodes.${mac}`;
     await ensureChannel('nodes',      'ESP32 Nodes');
     await ensureChannel(base,         `ESP32 Node ${mac}`);
-    await ensureState(`${base}.ip`,        { name: 'IP-Adresse',           type: 'string', role: 'info.ip',      read: true, write: false });
-    await ensureState(`${base}.name`,      { name: 'Gerätename',           type: 'string', role: 'info.name',    read: true, write: false });
-    await ensureState(`${base}.version`,   { name: 'Firmware-Version',     type: 'string', role: 'info.firmware', read: true, write: false });
-    await ensureState(`${base}.lastSeen`,  { name: 'Zuletzt gesehen (ms)', type: 'number', role: 'value.time',    read: true, write: false });
-    await ensureState(`${base}.config`,    { name: 'Konfiguration (JSON)', type: 'string', role: 'json',          read: true, write: true  });
-    await ensureState(`${base}.configAck`, { name: 'Config-Quittierung',   type: 'string', role: 'json',          read: true, write: false });
-    await ensureState(`${base}.cmd`,       { name: 'Befehl (JSON)',         type: 'string', role: 'json',          read: true, write: true  });
+    await ensureState(`${base}.ip`,        { name: 'IP address',              type: 'string', role: 'info.ip',       read: true, write: false });
+    await ensureState(`${base}.name`,      { name: 'Device name',             type: 'string', role: 'info.name',     read: true, write: false });
+    await ensureState(`${base}.version`,   { name: 'Firmware version',        type: 'string', role: 'info.firmware', read: true, write: false });
+    await ensureState(`${base}.lastSeen`,  { name: 'Last seen (ms)',          type: 'number', role: 'value.time',    read: true, write: false });
+    await ensureState(`${base}.config`,    { name: 'Configuration (JSON)',    type: 'string', role: 'json',          read: true, write: true  });
+    await ensureState(`${base}.configAck`, { name: 'Config acknowledgement', type: 'string', role: 'json',          read: true, write: false });
+    await ensureState(`${base}.cmd`,       { name: 'Command (JSON)',          type: 'string', role: 'json',          read: true, write: true  });
 }
 
 // ─── HTTP-Server ──────────────────────────────────────────────────────────────
 function startHttpServer() {
-    const port     = parseInt(adapter.config.port)     || 8089;
-    const user     = (adapter.config.user     || '').trim();
-    const password = (adapter.config.password || '').trim();
+    const cfg      = getValidatedConfig();
+    const port     = cfg.port;
+    const user     = cfg.user;
+    const password = cfg.password;
 
     server = http.createServer((req, res) => {
         res.setHeader('Access-Control-Allow-Origin',  '*');
@@ -248,9 +266,8 @@ function startHttpServer() {
         if (req.method === 'GET'  && url === '/api/version') { serveVersion(res);        return; }
         if (req.method === 'GET'  && url === '/api/nodes')   { serveNodesJson(res);      return; }
         if (req.method === 'GET'  && url === '/api/discover'){ serveDiscoverJson(res);   return; }
-        if (req.method === 'POST' && url === '/api/update')  { handleUpdate(req, res);   return; }
 
-        // ESP32 Node-Registrierung (kein Auth – ESP32 kennt keine Zugangsdaten)
+        // ESP32 node registration (no auth – ESP32 has no credentials)
         if (req.method === 'POST' && url === '/api/register') {
             readBody(req, b => handleNodeRegister(b, res, clientIp)); return;
         }
@@ -272,9 +289,9 @@ function startHttpServer() {
         if (user && password) {
             const authHeader = req.headers['authorization'] || '';
             if (!authHeader.startsWith('Basic ')) {
-                log(LVL.WARN, CAT.AUTH, `Kein Auth-Header`, `IP: ${clientIp} | ${url}`);
+                log(LVL.WARN, CAT.AUTH, `No auth header`, `IP: ${clientIp} | ${url}`);
                 res.writeHead(401, { 'WWW-Authenticate': 'Basic realm="MeterMaster"' });
-                res.end(JSON.stringify({ error: 'Authentifizierung erforderlich' })); return;
+                res.end(JSON.stringify({ error: 'Authentication required' })); return;
             }
             const decoded  = Buffer.from(authHeader.slice(6), 'base64').toString('utf-8');
             const colonIdx = decoded.indexOf(':');
@@ -291,8 +308,8 @@ function startHttpServer() {
                 authOk = crypto.timingSafeEqual(uBuf, uRef) && crypto.timingSafeEqual(pBuf, pRef);
             } catch { authOk = false; }
             if (!authOk) {
-                log(LVL.WARN, CAT.AUTH, `Ungültige Zugangsdaten`, `IP: ${clientIp} | User: "${reqUser}"`);
-                res.writeHead(403); res.end(JSON.stringify({ error: 'Ungültige Zugangsdaten' })); return;
+                log(LVL.WARN, CAT.AUTH, `Invalid credentials`, `IP: ${clientIp} | User: "${reqUser}"`);
+                res.writeHead(403); res.end(JSON.stringify({ error: 'Invalid credentials' })); return;
             }
             log(LVL.DEBUG, CAT.AUTH, `Auth OK`, `IP: ${clientIp} | User: "${reqUser}"`);
         }
@@ -312,19 +329,19 @@ function startHttpServer() {
                 if (req.method === 'POST' && cmdMatch) {
                     readBody(req, b => handleNodeCmd(cmdMatch[1].toUpperCase(), b, res));
                 } else {
-                    log(LVL.WARN, CAT.CONNECT, `Unbekannte URL`, `${req.method} ${url} von ${clientIp}`);
-                    res.writeHead(404); res.end(JSON.stringify({ error: 'Nicht gefunden' }));
+                    log(LVL.WARN, CAT.CONNECT, `Unknown URL`, `${req.method} ${url} from ${clientIp}`);
+                    res.writeHead(404); res.end(JSON.stringify({ error: 'Not found' }));
                 }
             }
         }
     });
 
     server.on('error', err => {
-        log(LVL.ERROR, CAT.SYSTEM, `HTTP-Fehler: ${err.message}`,
-            err.code === 'EADDRINUSE' ? `Port ${port} belegt!` : undefined);
+        log(LVL.ERROR, CAT.SYSTEM, `HTTP error: ${err.message}`,
+            err.code === 'EADDRINUSE' ? `Port ${port} in use!` : undefined);
     });
     server.listen(port, '0.0.0.0', () => {
-        log(LVL.INFO, CAT.SYSTEM, `Lauscht auf Port ${port}`, `Web-UI: http://IP:${port}/`);
+        log(LVL.INFO, CAT.SYSTEM, `Listening on port ${port}`, `Web UI: http://IP:${port}/`);
         adapter.setState('info.connection', { val: true, ack: true });
     });
 }
@@ -337,14 +354,14 @@ function handlePing(res, clientIp) {
 
 // ─── Validierung ─────────────────────────────────────────────────────────────
 function validateReading(data) {
-    if (!data || typeof data !== 'object') return 'Kein Objekt';
-    if (!data.house      || typeof data.house      !== 'string') return 'Pflichtfeld fehlt: house';
-    if (!data.apartment  || typeof data.apartment  !== 'string') return 'Pflichtfeld fehlt: apartment';
-    if (!data.meter      || typeof data.meter      !== 'string') return 'Pflichtfeld fehlt: meter';
-    if (data.value === undefined || data.value === null)         return 'Pflichtfeld fehlt: value';
-    if (isNaN(parseFloat(data.value)))                           return 'value muss eine Zahl sein';
-    if (!data.readingDate)                                       return 'Pflichtfeld fehlt: readingDate';
-    if (isNaN(new Date(data.readingDate).getTime()))             return 'readingDate: kein gültiges Datum';
+    if (!data || typeof data !== 'object') return 'Not an object';
+    if (!data.house      || typeof data.house      !== 'string') return 'Required field missing: house';
+    if (!data.apartment  || typeof data.apartment  !== 'string') return 'Required field missing: apartment';
+    if (!data.meter      || typeof data.meter      !== 'string') return 'Required field missing: meter';
+    if (data.value === undefined || data.value === null)         return 'Required field missing: value';
+    if (isNaN(parseFloat(data.value)))                           return 'value must be a number';
+    if (!data.readingDate)                                       return 'Required field missing: readingDate';
+    if (isNaN(new Date(data.readingDate).getTime()))             return 'readingDate: invalid date';
     return null;
 }
 
@@ -352,18 +369,18 @@ function validateReading(data) {
 async function handleReading(body, res, clientIp) {
     let data;
     try { data = JSON.parse(body); } catch {
-        log(LVL.WARN, CAT.SYNC, `Ungültiges JSON`, `IP: ${clientIp}`);
-        sendJson(res, 400, { error: 'Ungültiges JSON' }); return;
+        log(LVL.WARN, CAT.SYNC, `Invalid JSON`, `IP: ${clientIp}`);
+        sendJson(res, 400, { error: 'Invalid JSON' }); return;
     }
     const err = validateReading(data);
-    if (err) { log(LVL.WARN, CAT.SYNC, `Validierungsfehler`, err); sendJson(res, 422, { error: err }); return; }
-    log(LVL.INFO, CAT.SYNC, `Ablesung empfangen`,
+    if (err) { log(LVL.WARN, CAT.SYNC, `Validation error`, err); sendJson(res, 422, { error: err }); return; }
+    log(LVL.INFO, CAT.SYNC, `Reading received`,
         `${data.house}/${data.apartment}/${data.meter} = ${data.value} ${data.unit||''} (${data.readingDate})`);
     try {
         const path = await storeReading(data);
         sendJson(res, 200, { ok: true, path });
     } catch (e) {
-        log(LVL.ERROR, CAT.SYNC, `Speicherfehler`, e.message);
+        log(LVL.ERROR, CAT.SYNC, `Storage error`, e.message);
         sendJson(res, 500, { error: e.message });
     }
 }
@@ -372,21 +389,21 @@ async function handleReading(body, res, clientIp) {
 async function handleReadings(body, res, clientIp) {
     let items;
     try { items = JSON.parse(body); if (!Array.isArray(items)) items = [items]; } catch {
-        log(LVL.WARN, CAT.SYNC, `Ungültiges JSON im Batch`, `IP: ${clientIp}`);
-        sendJson(res, 400, { error: 'Array erwartet' }); return;
+        log(LVL.WARN, CAT.SYNC, `Invalid JSON in batch`, `IP: ${clientIp}`);
+        sendJson(res, 400, { error: 'Array expected' }); return;
     }
-    log(LVL.INFO, CAT.SYNC, `Batch empfangen`, `IP: ${clientIp} | ${items.length} Ablesungen`);
+    log(LVL.INFO, CAT.SYNC, `Batch received`, `IP: ${clientIp} | ${items.length} readings`);
     let stored = 0, failed = 0;
     const errors = [];
     for (const data of items) {
         const err = validateReading(data);
         if (err) { failed++; errors.push(`${data.meter||'?'}: ${err}`); continue; }
         try { await storeReading(data); stored++; }
-        catch (e) { failed++; errors.push(`${data.meter||'?'}: ${e.message}`); log(LVL.ERROR, CAT.SYNC, `Batch-Fehler`, `${data.meter}: ${e.message}`); }
+        catch (e) { failed++; errors.push(`${data.meter||'?'}: ${e.message}`); log(LVL.ERROR, CAT.SYNC, `Batch error`, `${data.meter}: ${e.message}`); }
     }
-    const summary = `${stored} gespeichert, ${failed} fehlgeschlagen`;
-    if (failed === 0) log(LVL.INFO, CAT.SYNC, `Batch ✓`, summary);
-    else              log(LVL.WARN, CAT.SYNC, `Batch mit Fehlern`, summary);
+    const summary = `${stored} stored, ${failed} failed`;
+    if (failed === 0) log(LVL.INFO, CAT.SYNC, `Batch OK`, summary);
+    else              log(LVL.WARN, CAT.SYNC, `Batch with errors`, summary);
     sendJson(res, 200, { ok: failed === 0, stored, failed, errors });
 }
 
@@ -394,19 +411,19 @@ async function handleReadings(body, res, clientIp) {
 async function handleImport(body, res, clientIp) {
     let data;
     try { data = JSON.parse(body); } catch {
-        log(LVL.WARN, CAT.IMPORT, `Ungültiges JSON`, `IP: ${clientIp}`);
-        sendJson(res, 400, { error: 'Ungültiges JSON' }); return;
+        log(LVL.WARN, CAT.IMPORT, `Invalid JSON`, `IP: ${clientIp}`);
+        sendJson(res, 400, { error: 'Invalid JSON' }); return;
     }
 
-    // Schema-Prüfung
+    // Schema validation
     if (!data.Apartments || !data.Meters || !data.Readings) {
-        sendJson(res, 422, { error: 'Ungültiges Format: Apartments, Meters und Readings erforderlich' }); return;
+        sendJson(res, 422, { error: 'Invalid format: Apartments, Meters and Readings required' }); return;
     }
 
     const schema  = data.SchemaVersion || '1.0';
-    const house   = data.HouseName || adapter.config.houseName || 'MeinHaus';
-    log(LVL.INFO, CAT.IMPORT, `Import gestartet`,
-        `Schema: ${schema} | ${data.Apartments.length} Wohnungen | ${data.Meters.length} Zähler | ${data.Readings.length} Ablesungen | IP: ${clientIp}`);
+    const house   = data.HouseName || 'MyHouse';
+    log(LVL.INFO, CAT.IMPORT, `Import started`,
+        `Schema: ${schema} | ${data.Apartments.length} apartments | ${data.Meters.length} meters | ${data.Readings.length} readings | IP: ${clientIp}`);
 
     // ID-Maps aufbauen: JSON-Id → Objekt
     const aptMap   = {};  // aptId   → Apartment
@@ -422,7 +439,7 @@ async function handleImport(body, res, clientIp) {
         const meter = meterMap[reading.MeterId];
         if (!meter) {
             skipped++;
-            log(LVL.WARN, CAT.IMPORT, `Zähler nicht gefunden`, `MeterId: ${reading.MeterId}`);
+            log(LVL.WARN, CAT.IMPORT, `Meter not found`, `MeterId: ${reading.MeterId}`);
             continue;
         }
 
@@ -441,7 +458,7 @@ async function handleImport(body, res, clientIp) {
         const err = validateReading(payload);
         if (err) {
             skipped++;
-            log(LVL.WARN, CAT.IMPORT, `Ungültige Ablesung übersprungen`, `${meter.Name}: ${err}`);
+            log(LVL.WARN, CAT.IMPORT, `Invalid reading skipped`, `${meter.Name}: ${err}`);
             continue;
         }
 
@@ -451,13 +468,13 @@ async function handleImport(body, res, clientIp) {
         } catch (e) {
             failed++;
             errors.push(`${meter.Name}: ${e.message}`);
-            log(LVL.ERROR, CAT.IMPORT, `Speicherfehler`, `${meter.Name}: ${e.message}`);
+            log(LVL.ERROR, CAT.IMPORT, `Storage error`, `${meter.Name}: ${e.message}`);
         }
     }
 
-    const summary = `${stored} importiert, ${skipped} übersprungen, ${failed} fehlgeschlagen`;
-    if (failed === 0) log(LVL.INFO, CAT.IMPORT, `Import abgeschlossen ✓`, summary);
-    else              log(LVL.WARN, CAT.IMPORT, `Import mit Fehlern`,      summary);
+    const summary = `${stored} imported, ${skipped} skipped, ${failed} failed`;
+    if (failed === 0) log(LVL.INFO, CAT.IMPORT, `Import completed`, summary);
+    else              log(LVL.WARN, CAT.IMPORT, `Import with errors`, summary);
 
     sendJson(res, 200, { ok: failed === 0, stored, skipped, failed, errors, summary });
 }
@@ -474,18 +491,18 @@ async function storeReading(data) {
     const isNew = await ensureChannel(`${house}`, data.house);
     await ensureChannel(`${house}.${apt}`,  data.apartment);
     await ensureChannel(`${base}`,          data.meter);
-    await ensureChannel(`${base}.readings`, 'Ablesungen');
+    await ensureChannel(`${base}.readings`, 'Readings');
 
-    if (isNew) log(LVL.INFO, CAT.DATAPOINT, `Neuer Zähler`, `metermaster.0.${base}`);
+    if (isNew) log(LVL.INFO, CAT.DATAPOINT, `New meter`, `metermaster.0.${base}`);
 
-    const dpNew = await ensureState(`${base}.readings.latest`,     { name: `${data.meter} – Letzter Wert`, type: 'number', role: 'value', unit: data.unit||'', read: true, write: false });
-    await ensureState(`${base}.readings.latestDate`, { name: 'Ablesedatum',          type: 'string', role: 'date',      read: true, write: false });
-    await ensureState(`${base}.name`,                { name: 'Zählername',           type: 'string', role: 'info.name', read: true, write: false });
-    await ensureState(`${base}.unit`,                { name: 'Einheit',              type: 'string', role: 'text',      read: true, write: false });
-    await ensureState(`${base}.typeName`,            { name: 'Zählertyp',            type: 'string', role: 'text',      read: true, write: false });
-    await ensureState(`${base}.readings.history`,    { name: 'Historische Ablesungen', type: 'array', role: 'list',          read: true, write: false });
+    const dpNew = await ensureState(`${base}.readings.latest`,     { name: `${data.meter} – latest value`, type: 'number', role: 'value', unit: data.unit||'', read: true, write: false });
+    await ensureState(`${base}.readings.latestDate`, { name: 'Reading date',    type: 'string', role: 'date', read: true, write: false });
+    await ensureState(`${base}.name`,                { name: 'Meter name',      type: 'string', role: 'text', read: true, write: false });
+    await ensureState(`${base}.unit`,                { name: 'Unit',            type: 'string', role: 'text', read: true, write: false });
+    await ensureState(`${base}.typeName`,            { name: 'Meter type',      type: 'string', role: 'text', read: true, write: false });
+    await ensureState(`${base}.readings.history`,    { name: 'Reading history', type: 'string', role: 'json', read: true, write: false });
 
-    if (dpNew) log(LVL.INFO, CAT.DATAPOINT, `Datenpunkte angelegt`, `${base}.readings.{latest,latestDate,history} + name/unit/typeName`);
+    if (dpNew) log(LVL.INFO, CAT.DATAPOINT, `Data points created`, `${base}.readings.{latest,latestDate,history} + name/unit/typeName`);
 
     await adapter.setStateAsync(`${base}.readings.latest`,     { val: value,              ts, ack: true });
     await adapter.setStateAsync(`${base}.readings.latestDate`, { val: data.readingDate,   ts, ack: true });
@@ -493,11 +510,11 @@ async function storeReading(data) {
     await adapter.setStateAsync(`${base}.unit`,                { val: data.unit||'',      ts, ack: true });
     await adapter.setStateAsync(`${base}.typeName`,            { val: data.typeName||'',  ts, ack: true });
 
-    log(LVL.DEBUG, CAT.SYNC, `State geschrieben`, `metermaster.0.${base} = ${value} ${data.unit||''} | ${data.readingDate}`);
+    log(LVL.DEBUG, CAT.SYNC, `State written`, `metermaster.0.${base} = ${value} ${data.unit||''} | ${data.readingDate}`);
 
     const histResult = await updateHistory(base, { value, unit: data.unit||'', readingDate: data.readingDate, ts });
-    if (histResult === 'added')     log(LVL.DEBUG, CAT.HISTORY, `Historie +1`, `${base} @ ${data.readingDate}`);
-    if (histResult === 'duplicate') log(LVL.DEBUG, CAT.HISTORY, `Duplikat`,    `${base} @ ${data.readingDate}`);
+    if (histResult === 'added')     log(LVL.DEBUG, CAT.HISTORY, `History +1`, `${base} @ ${data.readingDate}`);
+    if (histResult === 'duplicate') log(LVL.DEBUG, CAT.HISTORY, `Duplicate`,  `${base} @ ${data.readingDate}`);
 
     // In-Memory-Cache aktualisieren
     cacheReading(house, apt, meter, value, data.unit||'', data.typeName||'', data.readingDate, ts);
@@ -511,7 +528,7 @@ async function storeReading(data) {
 // ─── Historie ─────────────────────────────────────────────────────────────────
 async function updateHistory(base, entry) {
     const stateId = `${base}.readings.history`;
-    const keep    = parseInt(adapter.config.keepHistory) || 0;
+    const keep    = getValidatedConfig().keepHistory;
     let   history = [];
     try {
         const ex = await adapter.getStateAsync(stateId);
@@ -583,19 +600,20 @@ function resolveMigratedRole(id, common) {
 
 async function migrateStateRoles() {
     try {
-        const objects = await adapter.getForeignObjectsAsync('*', { type: 'state' });
-        if (!objects) return;
+        const allObjects = await adapter.getAdapterObjectsAsync();
+        if (!allObjects) return;
         let fixed = 0;
-        for (const [id, obj] of Object.entries(objects)) {
+        for (const [id, obj] of Object.entries(allObjects)) {
+            if (obj.type !== 'state') continue;
             const newRole = resolveMigratedRole(id, obj.common || {});
             if (newRole && obj.common.role !== newRole) {
                 await adapter.extendObjectAsync(id, { common: { role: newRole } });
                 fixed++;
             }
         }
-        if (fixed) log(LVL.INFO, CAT.SYSTEM, 'State-Rollen migriert', `${fixed} Objekte`);
+        if (fixed) log(LVL.INFO, CAT.SYSTEM, 'State roles migrated', `${fixed} objects`);
     } catch (e) {
-        log(LVL.WARN, CAT.SYSTEM, 'State-Rollen-Migration fehlgeschlagen', e.message);
+        log(LVL.WARN, CAT.SYSTEM, 'State role migration failed', e.message);
     }
 }
 
@@ -676,7 +694,7 @@ function serveDiscoverJson(res) {
 async function handleNodeConfig(mac, body, res, clientIp) {
     let data;
     try { data = JSON.parse(body); } catch {
-        sendJson(res, 400, { error: 'Ungültiges JSON' }); return;
+        sendJson(res, 400, { error: 'Invalid JSON' }); return;
     }
     const sid   = (data.sid   || '').trim();
     const label = (data.label || '').trim();
@@ -697,10 +715,10 @@ async function handleNodeConfig(mac, body, res, clientIp) {
         await adapter.setStateAsync(`nodes.${mac}.config`, { val: configStr, ack: true });
         if (!nodesCache[mac]) nodesCache[mac] = { mac };
         nodesCache[mac].config = configStr;
-        log(LVL.INFO, CAT.NODE, `Config gesetzt`, `${mac} \u2192 ${sid || '(leer)'} | IP: ${nodesCache[mac]?.ip || '?'}`);
+        log(LVL.INFO, CAT.NODE, `Config set`, `${mac} \u2192 ${sid || '(empty)'} | IP: ${nodesCache[mac]?.ip || '?'}`);
         sendJson(res, 200, { ok: true, mac, config });
     } catch (e) {
-        log(LVL.ERROR, CAT.NODE, `Config-Fehler`, `${mac}: ${e.message}`);
+        log(LVL.ERROR, CAT.NODE, `Config error`, `${mac}: ${e.message}`);
         sendJson(res, 500, { error: e.message });
     }
 }
@@ -711,7 +729,7 @@ async function handleNodeConfig(mac, body, res, clientIp) {
 async function handleNodeCmd(mac, body, res) {
     let data;
     try { data = JSON.parse(body); } catch {
-        sendJson(res, 400, { error: 'Ungültiges JSON' }); return;
+        sendJson(res, 400, { error: 'Invalid JSON' }); return;
     }
     const cmdStr = JSON.stringify(data);
     try {
@@ -720,10 +738,10 @@ async function handleNodeCmd(mac, body, res) {
         if (!nodesCache[mac]) nodesCache[mac] = { mac };
         nodesCache[mac].cmd = cmdStr;
         const keys = Object.keys(data).join(', ');
-        log(LVL.INFO, CAT.NODE, `Befehl gesetzt`, `${mac} → ${keys}`);
+        log(LVL.INFO, CAT.NODE, `Command set`, `${mac} → ${keys}`);
         sendJson(res, 200, { ok: true, mac, cmd: data });
     } catch (e) {
-        log(LVL.ERROR, CAT.NODE, `Cmd-Fehler`, `${mac}: ${e.message}`);
+        log(LVL.ERROR, CAT.NODE, `Cmd error`, `${mac}: ${e.message}`);
         sendJson(res, 500, { error: e.message });
     }
 }
@@ -734,7 +752,7 @@ async function handleNodeCmd(mac, body, res) {
 async function handleNodeRegister(body, res, clientIp) {
     let data;
     try { data = JSON.parse(body); } catch {
-        sendJson(res, 400, { error: 'Ungültiges JSON' }); return;
+        sendJson(res, 400, { error: 'Invalid JSON' }); return;
     }
     const mac     = (data.mac     || '').replace(/[^A-Fa-f0-9]/g, '').toUpperCase();
     const ip      = (data.ip      || clientIp || '').trim();
@@ -742,7 +760,7 @@ async function handleNodeRegister(body, res, clientIp) {
     const version = (data.version || '').trim();
     const ack     = data.configAck ? String(data.configAck) : null;
 
-    if (!mac) { sendJson(res, 400, { error: 'Feld mac fehlt' }); return; }
+    if (!mac) { sendJson(res, 400, { error: 'Field mac missing' }); return; }
 
     const ts = Date.now();
     if (!nodesCache[mac]) nodesCache[mac] = { mac };
@@ -766,7 +784,7 @@ async function handleNodeRegister(body, res, clientIp) {
         const config = nodesCache[mac].config || null;
         sendJson(res, 200, { ok: true, mac, config });
     } catch (e) {
-        log(LVL.ERROR, CAT.NODE, `Register-Fehler`, `${mac}: ${e.message}`);
+        log(LVL.ERROR, CAT.NODE, `Register error`, `${mac}: ${e.message}`);
         sendJson(res, 500, { error: e.message });
     }
 }
@@ -784,7 +802,7 @@ async function handleNodeAck(mac, body, res) {
     try {
         await ensureNodeStates(mac);
         await adapter.setStateAsync(`nodes.${mac}.configAck`, { val: ack, ack: true });
-        log(LVL.INFO, CAT.NODE, `Config quittiert`, `${mac} | ack: ${ack}`);
+        log(LVL.INFO, CAT.NODE, `Config acknowledged`, `${mac} | ack: ${ack}`);
         sendJson(res, 200, { ok: true });
     } catch (e) {
         sendJson(res, 500, { error: e.message });
@@ -867,22 +885,6 @@ async function serveVersion(res) {
     }
 }
 
-function handleUpdate(req, res) {
-    log(LVL.INFO, CAT.SYSTEM, 'Update gestartet', `von ${CURRENT_VERSION} → GitHub`);
-    const cmd = `iobroker upgrade metermaster && iobroker restart metermaster.0`;
-    exec(cmd, { timeout: 180000 }, (err, stdout, stderr) => {
-        const out = (stdout + '\n' + stderr).trim();
-        if (err) {
-            log(LVL.ERROR, CAT.SYSTEM, 'Update fehlgeschlagen', err.message);
-            sendJson(res, 500, { ok: false, error: err.message, output: out });
-        } else {
-            log(LVL.INFO, CAT.SYSTEM, 'Update erfolgreich', out.slice(0, 200));
-            sendJson(res, 200, { ok: true, output: out });
-        }
-    });
-}
-
-
 
 function serveWebApp(res, port) {
 
@@ -937,7 +939,7 @@ const TYPE_ICONS = {
 };
 
 const html = `<!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -1333,7 +1335,7 @@ input.search {
     <span class="logo-sub">ioBroker Adapter &nbsp;<span style="color:var(--primary);font-size:.95em;letter-spacing:.5px">v${CURRENT_VERSION}</span></span>
   </div>
   <div class="hstats">
-    <div class="hstat"><span id="lbl-rx">Ablesungen</span>: <b id="st-rx">–</b></div>
+    <div class="hstat"><span id="lbl-rx">Readings</span>: <b id="st-rx">–</b></div>
     <div class="hstat"><span id="lbl-nodes">Nodes</span>: <b id="st-nodes">–</b></div>
     <div class="hstat"><span id="lbl-up">Uptime</span>: <b id="st-up">–</b></div>
     <div class="live-dot" id="st-live">● Live</div>
@@ -1346,7 +1348,7 @@ input.search {
 
 <!-- ══ NAV ═══════════════════════════════════════════════════════════════════ -->
 <nav>
-  <button class="tab active" id="tab-data"   data-tab="data"   onclick="showTab('data')"  >📊 Daten</button>
+  <button class="tab active" id="tab-data"   data-tab="data"   onclick="showTab('data')"  >📊 Data</button>
   <button class="tab"        id="tab-nodes"  data-tab="nodes"  onclick="showTab('nodes')" >📡 Nodes</button>
   <button class="tab"        id="tab-import" data-tab="import" onclick="showTab('import')">📥 Import</button>
   <button class="tab"        id="tab-logs"   data-tab="logs"   onclick="showTab('logs')"  >📋 Logs</button>
@@ -1358,7 +1360,7 @@ input.search {
   <div id="data-container">
     <div class="empty-state">
       <div class="ico">📡</div>
-      <p>Noch keine Ablesungen empfangen.<br>Starte einen Sync in der MeterMaster App oder lade ein Backup hoch.</p>
+      <p id="no-data-msg">No readings received yet.<br>Start a sync in the MeterMaster app or upload a backup.</p>
     </div>
   </div>
 </div>
@@ -1367,15 +1369,15 @@ input.search {
 <div class="page" id="page-nodes">
   <div id="nodes-page-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
     <div>
-      <h2 style="font-size:1em;color:var(--secondary);margin-bottom:2px;">📡 Registrierte ESP32 Nodes</h2>
-      <div style="font-size:.82em;color:var(--text-dim);">Gesamt: <b id="nd-total" style="color:var(--text);">0</b> &nbsp;|&nbsp; Online: <b id="nd-online" style="color:var(--accent);">0</b></div>
+      <h2 id="nodes-title" style="font-size:1em;color:var(--secondary);margin-bottom:2px;">📡 Registered ESP32 Nodes</h2>
+      <div style="font-size:.82em;color:var(--text-dim);"><span id="lbl-nd-total">Total:</span> <b id="nd-total" style="color:var(--text);">0</b> &nbsp;|&nbsp; <span id="lbl-nd-online">Online:</span> <b id="nd-online" style="color:var(--accent);">0</b></div>
     </div>
-    <button class="ghost" onclick="fetchNodes()">↻ Aktualisieren</button>
+    <button class="ghost" id="nodes-refresh-btn" onclick="fetchNodes()">↻ Refresh</button>
   </div>
   <div id="nodes-container">
     <div class="empty-state">
       <div class="ico">📡</div>
-      <p>Noch keine ESP32 Nodes registriert.<br>Wenn ein MeterMaster Node startet und seinen Heartbeat sendet, erscheint er hier automatisch.</p>
+      <p id="no-nodes-msg">No ESP32 nodes registered yet.<br>When a MeterMaster node starts and sends its heartbeat, it will appear here automatically.</p>
     </div>
   </div>
 </div>
@@ -1383,8 +1385,8 @@ input.search {
 <!-- ══ IMPORT ════════════════════════════════════════════════════════════════ -->
 <div class="page" id="page-import">
   <div class="import-card">
-    <h3>📥 App-Backup importieren</h3>
-    <p>Importiere einen Backup-Export aus der MeterMaster App direkt in den Adapter. Alle Ablesungen werden mit ihren originalen Zeitstempeln gespeichert — ideal für die erstmalige Befüllung oder das Nachführen historischer Daten.</p>
+    <h3 id="import-title">📥 Import app backup</h3>
+    <p id="import-desc">Import a backup export from the MeterMaster app directly into the adapter. All readings are stored with their original timestamps — ideal for initial setup or importing historical data.</p>
 
     <div class="schema-box">{ "SchemaVersion": "2.0", "Source": "MeterMaster",
   "Apartments": [ { "Id": 1, "Name": "Westerheim" } ],
@@ -1393,24 +1395,24 @@ input.search {
 }</div>
 
     <div class="house-row">
-      <label>Hausname (ioBroker-Pfad):</label>
-      <input type="text" id="imp-house" value="MeinHaus" placeholder="z.B. MeinHaus">
+      <label id="import-house-label">House name (ioBroker path):</label>
+      <input type="text" id="imp-house" value="MyHouse" placeholder="e.g. MyHouse">
     </div>
 
     <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-in').click()">
       <div class="dz-ico">📂</div>
-      <p>JSON-Datei hier ablegen oder klicken zum Auswählen</p>
+      <p id="import-drop-text">Drop JSON file here or click to select</p>
     </div>
     <input type="file" id="file-in" accept=".json">
 
     <div class="preview-box" id="preview-box">
-      <h4>📋 Vorschau</h4>
+      <h4 id="import-preview-title">📋 Preview</h4>
       <div id="preview-content"></div>
     </div>
 
     <div class="btn-row">
-      <button class="primary" id="imp-btn" disabled onclick="doImport()">⬆ Importieren</button>
-      <button class="ghost" onclick="clearImport()">✕ Zurücksetzen</button>
+      <button class="primary" id="imp-btn" disabled onclick="doImport()">⬆ Import</button>
+      <button class="ghost" id="import-reset-btn" onclick="clearImport()">✕ Reset</button>
     </div>
     <div class="result-box" id="imp-result"></div>
   </div>
@@ -1420,14 +1422,14 @@ input.search {
 <div class="page" id="page-logs">
   <div class="log-toolbar">
     <select id="fl">
-      <option value="">Alle Level</option>
+      <option value="" id="fl-all">All levels</option>
       <option value="debug">DEBUG</option>
       <option value="info">INFO</option>
       <option value="warn">WARN</option>
       <option value="error">ERROR</option>
     </select>
     <select id="fc">
-      <option value="">Alle Kategorien</option>
+      <option value="" id="fc-all">All categories</option>
       <option value="SYSTEM">SYSTEM</option>
       <option value="AUTH">AUTH</option>
       <option value="CONNECT">CONNECT</option>
@@ -1437,13 +1439,13 @@ input.search {
       <option value="IMPORT">IMPORT</option>
       <option value="NODE">NODE</option>
     </select>
-    <input class="search" type="text" id="ft" placeholder="Suche…">
-    <button class="ghost" onclick="clearLogs()">🗑 Leeren</button>
-    <button class="ghost" onclick="exportLogs()">⬇ Export</button>
-    <label class="lbl"><input type="checkbox" id="as" checked> Auto-Scroll</label>
-    <label class="lbl"><input type="checkbox" id="ar" checked> Live</label>
+    <input class="search" type="text" id="ft" placeholder="Search…">
+    <button class="ghost" id="log-clear-btn" onclick="clearLogs()">🗑 Clear</button>
+    <button class="ghost" id="log-export-btn" onclick="exportLogs()">⬇ Export</button>
+    <label class="lbl"><input type="checkbox" id="as" checked> <span id="lbl-auto-scroll">Auto-scroll</span></label>
+    <label class="lbl"><input type="checkbox" id="ar" checked> <span id="lbl-live">Live</span></label>
   </div>
-  <div id="lc"><div class="log-empty" id="log-empty">Keine Log-Einträge vorhanden.</div></div>
+  <div id="lc"><div class="log-empty" id="log-empty">No log entries yet.</div></div>
 </div>
 
 
@@ -1451,75 +1453,74 @@ input.search {
 <div class="page" id="page-system">
 
   <div class="sys-card">
-    <h3>📊 Statistiken</h3>
+    <h3 id="sys-stats-title">📊 Statistics</h3>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
       <div style="background:var(--bg-deep);border:1px solid var(--border);border-radius:9px;padding:12px 14px;">
         <div style="font-size:1.6em;font-weight:700;color:var(--secondary);" id="sys-rx">–</div>
-        <div style="font-size:.78em;color:var(--text-dim);margin-top:3px;">Ablesungen gesamt</div>
+        <div id="sys-rx-label" style="font-size:.78em;color:var(--text-dim);margin-top:3px;">Total readings</div>
       </div>
       <div style="background:var(--bg-deep);border:1px solid var(--border);border-radius:9px;padding:12px 14px;">
         <div style="font-size:1.6em;font-weight:700;color:var(--secondary);" id="sys-up">–</div>
-        <div style="font-size:.78em;color:var(--text-dim);margin-top:3px;">Uptime</div>
+        <div id="sys-up-label" style="font-size:.78em;color:var(--text-dim);margin-top:3px;">Uptime</div>
       </div>
       <div style="background:var(--bg-deep);border:1px solid var(--border);border-radius:9px;padding:12px 14px;">
         <div style="font-size:1.6em;font-weight:700;color:var(--accent);" id="sys-online">–</div>
-        <div style="font-size:.78em;color:var(--text-dim);margin-top:3px;">Nodes online</div>
+        <div id="sys-online-label" style="font-size:.78em;color:var(--text-dim);margin-top:3px;">Nodes online</div>
       </div>
       <div style="background:var(--bg-deep);border:1px solid var(--border);border-radius:9px;padding:12px 14px;">
         <div style="font-size:1.6em;font-weight:700;color:var(--secondary);" id="sys-total">–</div>
-        <div style="font-size:.78em;color:var(--text-dim);margin-top:3px;">Nodes gesamt</div>
+        <div id="sys-total-label" style="font-size:.78em;color:var(--text-dim);margin-top:3px;">Total nodes</div>
       </div>
     </div>
   </div>
 
   <div class="sys-card">
-    <h3>🔄 Adapter-Version</h3>
-    <div class="ver-row"><span class="ver-label">Installiert</span>  <span class="ver-val" id="sv-cur">–</span></div>
-    <div class="ver-row"><span class="ver-label">Aktuell (GitHub)</span><span class="ver-val" id="sv-lat">–</span></div>
-    <div class="ver-row"><span class="ver-label">Status</span>        <span id="sv-status"><span class="badge-warn">Noch nicht geprüft</span></span></div>
+    <h3 id="sys-version-title">🔄 Adapter version</h3>
+    <div class="ver-row"><span class="ver-label" id="sys-lbl-installed">Installed</span>  <span class="ver-val" id="sv-cur">–</span></div>
+    <div class="ver-row"><span class="ver-label" id="sys-lbl-latest">Latest (GitHub)</span><span class="ver-val" id="sv-lat">–</span></div>
+    <div class="ver-row"><span class="ver-label" id="sys-lbl-status">Status</span>        <span id="sv-status"><span class="badge-warn" id="sv-status-text">Not checked yet</span></span></div>
     <div class="sys-btn-row">
-      <button class="ghost" id="sv-check-btn">🔍 Auf Updates prüfen</button>
-      <button class="primary" id="sv-upd-btn" style="display:none">⬆ Update installieren</button>
-      <span id="sv-spin" style="display:none;font-size:.84em;color:var(--text-dim)">⏳ Bitte warten…</span>
+      <button class="ghost" id="sv-check-btn">🔍 Check for updates</button>
+      <span id="sv-spin" style="display:none;font-size:.84em;color:var(--text-dim)">⏳ Please wait…</span>
     </div>
     <div class="sys-out" id="sv-out"></div>
   </div>
 
   <div class="sys-card">
-    <h3>ℹ️ Adapter-Info</h3>
-    <div class="ver-row"><span class="ver-label">Adapter</span>      <span class="ver-val">iobroker.metermaster</span></div>
-    <div class="ver-row"><span class="ver-label">Port</span>         <span class="ver-val">${port}</span></div>
-    <div class="ver-row"><span class="ver-label">Repository</span>
+    <h3 id="sys-info-title">ℹ️ Adapter info</h3>
+    <div class="ver-row"><span class="ver-label" id="sys-lbl-adapter">Adapter</span>      <span class="ver-val">iobroker.metermaster</span></div>
+    <div class="ver-row"><span class="ver-label" id="sys-lbl-port">Port</span>         <span class="ver-val">${port}</span></div>
+    <div class="ver-row"><span class="ver-label" id="sys-lbl-repo">Repository</span>
       <a href="https://github.com/MPunktBPunkt/ioBroker.metermaster" target="_blank"
          style="color:var(--primary);font-size:.84em">GitHub ↗</a>
     </div>
   </div>
 
   <div class="sys-card">
-    <h3>🔄 Update-Befehle</h3>
-    <p style="font-size:.82em;color:var(--text-dim);margin:0 0 12px">
-      Adapter aktualisieren — Befehle in der ioBroker-Konsole ausführen:
+    <h3 id="sys-cmds-title">🔄 Update commands</h3>
+    <p id="sys-cmds-desc" style="font-size:.82em;color:var(--text-dim);margin:0 0 12px">
+      Update the adapter — run these commands in the ioBroker console:
     </p>
     <div class="cmd-row">
       <code class="cmd-code">iobroker upgrade metermaster</code>
-      <button class="cmd-copy" onclick="copyCmd(this)" data-cmd="iobroker upgrade metermaster" title="Kopieren">📋</button>
+      <button class="cmd-copy" onclick="copyCmd(this)" data-cmd="iobroker upgrade metermaster" title="Copy">📋</button>
     </div>
     <div class="cmd-row" style="margin-top:8px">
       <code class="cmd-code">iobroker restart metermaster.0</code>
-      <button class="cmd-copy" onclick="copyCmd(this)" data-cmd="iobroker restart metermaster.0" title="Kopieren">📋</button>
+      <button class="cmd-copy" onclick="copyCmd(this)" data-cmd="iobroker restart metermaster.0" title="Copy">📋</button>
     </div>
     <div class="cmd-row" style="margin-top:8px">
       <code class="cmd-code">sleep 5 &amp;&amp; iobroker status metermaster.0</code>
-      <button class="cmd-copy" onclick="copyCmd(this)" data-cmd="sleep 5 && iobroker status metermaster.0" title="Kopieren">📋</button>
+      <button class="cmd-copy" onclick="copyCmd(this)" data-cmd="sleep 5 && iobroker status metermaster.0" title="Copy">📋</button>
     </div>
-    <p style="font-size:.78em;color:var(--text-dim);margin:10px 0 0">
-      💡 Tipp: Alle drei Befehle nacheinander ausführen — warten bis jeder abgeschlossen ist.
+    <p id="sys-cmds-tip" style="font-size:.78em;color:var(--text-dim);margin:10px 0 0">
+      💡 Tip: Run all three commands in sequence — wait for each to finish.
     </p>
   </div>
 
 </div>
 
-<div id="ni" onclick="scrollLogBottom()">↓ Neue Einträge</div>
+<div id="ni" onclick="scrollLogBottom()">↓ New entries</div>
 
 <!-- ══ CHART-MODAL (vor Script — init() bindet Listener) ═════════════════════ -->
 <div id="chart-overlay" class="modal-overlay">
@@ -1550,14 +1551,14 @@ input.search {
 <!-- ══ LOGIN-MODAL ═══════════════════════════════════════════════════════════ -->
 <div id="login-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,11,26,.85);z-index:9999;align-items:center;justify-content:center;">
   <div style="background:var(--bg-surface);border:1px solid var(--border-light);border-radius:16px;padding:32px 36px;min-width:320px;max-width:420px;width:90%;">
-    <div style="font-size:1.1em;font-weight:700;color:var(--secondary);margin-bottom:6px;">🔑 Anmelden</div>
-    <div style="font-size:.82em;color:var(--text-dim);margin-bottom:20px;">Zugangsdaten für schreibende Aktionen (Zähler zuweisen, Import).</div>
+    <div id="login-title" style="font-size:1.1em;font-weight:700;color:var(--secondary);margin-bottom:6px;">🔑 Sign in</div>
+    <div id="login-desc" style="font-size:.82em;color:var(--text-dim);margin-bottom:20px;">Credentials for write actions (assign meter, import).</div>
     <div style="margin-bottom:12px;">
-      <label style="font-size:.82em;color:var(--text-dim);display:block;margin-bottom:4px;">Benutzername</label>
+      <label id="login-user-label" style="font-size:.82em;color:var(--text-dim);display:block;margin-bottom:4px;">Username</label>
       <input id="login-user" type="text" value="metermaster" style="width:100%;background:var(--bg-surface2);border:1px solid var(--border-light);color:var(--text);padding:8px 12px;border-radius:8px;font-size:.9em;outline:none;" onkeydown="if(event.key===\'Enter\')document.getElementById(\'login-pass\').focus()">
     </div>
     <div style="margin-bottom:18px;">
-      <label style="font-size:.82em;color:var(--text-dim);display:block;margin-bottom:4px;">Passwort</label>
+      <label id="login-pass-label" style="font-size:.82em;color:var(--text-dim);display:block;margin-bottom:4px;">Password</label>
       <div style="position:relative;">
         <input id="login-pass" type="password" style="width:100%;background:var(--bg-surface2);border:1px solid var(--border-light);color:var(--text);padding:8px 36px 8px 12px;border-radius:8px;font-size:.9em;outline:none;" onkeydown="if(event.key===\'Enter\')doLogin()">
         <button onclick="const i=document.getElementById(\'login-pass\');i.type=i.type===\'password\'?\'text\':\'password\';" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-dim);">👁</button>
@@ -1565,8 +1566,8 @@ input.search {
     </div>
     <div id="login-msg" style="font-size:.82em;color:var(--danger);min-height:18px;margin-bottom:12px;"></div>
     <div style="display:flex;gap:10px;">
-      <button onclick="doLogin()" style="flex:1;background:var(--primary);color:#fff;border:none;padding:9px;border-radius:9px;cursor:pointer;font-size:.9em;font-weight:600;">✓ Anmelden</button>
-      <button onclick="hideLoginModal()" style="background:transparent;border:1px solid var(--border-light);color:var(--text-dim);padding:9px 16px;border-radius:9px;cursor:pointer;font-size:.9em;">✕</button>
+      <button id="login-submit-btn" onclick="doLogin()" style="flex:1;background:var(--primary);color:#fff;border:none;padding:9px;border-radius:9px;cursor:pointer;font-size:.9em;font-weight:600;">✓ Sign in</button>
+      <button id="login-cancel-btn" onclick="hideLoginModal()" style="background:transparent;border:1px solid var(--border-light);color:var(--text-dim);padding:9px 16px;border-radius:9px;cursor:pointer;font-size:.9em;">✕</button>
     </div>
   </div>
 </div>
@@ -1590,7 +1591,7 @@ function hideLoginModal() {
 async function doLogin() {
   const user = document.getElementById('login-user').value.trim();
   const pass = document.getElementById('login-pass').value;
-  if (!user) { document.getElementById('login-msg').textContent = 'Benutzername fehlt'; return; }
+  if (!user) { document.getElementById('login-msg').textContent = t('login_missing_user'); return; }
   setAuth(user, pass);
   try {
     const r = await fetch('/api/ping', { headers: { 'Authorization': _authHeader } });
@@ -1598,17 +1599,17 @@ async function doLogin() {
       hideLoginModal();
     } else {
       _authHeader = null;
-      document.getElementById('login-msg').textContent = '❌ Falsche Zugangsdaten';
+      document.getElementById('login-msg').textContent = '\u274C ' + t('login_wrong');
     }
   } catch(e) {
-    document.getElementById('login-msg').textContent = '❌ Verbindungsfehler';
+    document.getElementById('login-msg').textContent = '\u274C ' + t('login_conn_err');
   }
 }
 async function authFetch(url, opts) {
   if (!_authHeader) { showLoginModal(); return null; }
   const headers = Object.assign({ 'Content-Type': 'application/json', 'Authorization': _authHeader }, opts.headers || {});
   const r = await fetch(url, Object.assign({}, opts, { headers }));
-  if (r.status === 401) { _authHeader = null; showLoginModal('❌ Sitzung abgelaufen – bitte neu anmelden'); return null; }
+  if (r.status === 401) { _authHeader = null; showLoginModal('\u274C ' + t('login_expired')); return null; }
   return r;
 }
 
@@ -1623,36 +1624,106 @@ const I18N = {
     readings:'Ablesungen', nodes:'Nodes', uptime:'Uptime', live:'Live', disconnected:'Getrennt',
     tab_data:'Daten', tab_nodes:'Nodes', tab_import:'Import', tab_logs:'Logs', tab_system:'System',
     no_data:'Noch keine Ablesungen empfangen.<br>Starte einen Sync in der MeterMaster App oder lade ein Backup hoch.',
+    no_nodes:'Noch keine ESP32 Nodes registriert.<br>Wenn ein MeterMaster Node startet, erscheint er automatisch hier.',
     history:'Verlauf', since_last:'seit letzter Ablesung', days:'Tage', chart_btn:'Chart', csv_btn:'CSV',
     chart_readings:'Z\u00E4hlerstand', chart_monthly:'Monatsverbrauch', chart_period_all:'Alles',
     chart_yearly:'Pro Jahr', chart_yearly_proj:'Hochrechnung', chart_per_year:'/Jahr',
     chart_yearly_hint:'basierend auf {days} {daysLabel} ({delta} {unit})',
     chart_no_data:'Zu wenig Daten f\u00FCr eine Grafik (mind. 2 Ablesungen n\u00F6tig).',
     chart_close:'Schlie\u00DFen', error:'Fehler', consume:'Verbrauch',
-    ago_just:'gerade eben', ago_sec:'vor {s}s', ago_min:'vor {m}min'
+    ago_just:'gerade eben', ago_sec:'vor {s}s', ago_min:'vor {m}min',
+    nodes_title:'Registrierte ESP32 Nodes', nodes_total:'Gesamt:', nodes_online:'Online:', nodes_refresh:'Aktualisieren',
+    th_status:'Status', th_name:'Name', th_ip:'IP-Adresse', th_fw:'FW-Version', th_last_seen:'Zuletzt gesehen',
+    th_assign:'Z\u00E4hler zuweisen', th_led:'LED', node_online:'Online', node_offline:'Offline',
+    no_meter:'\u2014 Kein Z\u00E4hler zugewiesen \u2014', save:'Speichern', saved:'Gespeichert',
+    led_on:'Ein', led_off:'Aus', led_on_title:'LED ein', led_off_title:'LED aus',
+    import_title:'App-Backup importieren',
+    import_desc:'Importiere einen Backup-Export aus der MeterMaster App direkt in den Adapter. Alle Ablesungen werden mit ihren originalen Zeitstempeln gespeichert \u2014 ideal f\u00FCr die erstmalige Bef\u00FCllung oder das Nachf\u00FChren historischer Daten.',
+    import_house_label:'Hausname (ioBroker-Pfad):', import_house_ph:'z.B. MeinHaus',
+    import_drop:'JSON-Datei hier ablegen oder klicken zum Ausw\u00E4hlen',
+    import_preview:'Vorschau', import_btn:'Importieren', import_reset:'Zur\u00FCcksetzen', import_importing:'Importiere\u2026',
+    prev_file:'Datei', prev_schema:'Schema', prev_apts:'Wohnungen', prev_meters:'Z\u00E4hler',
+    prev_readings:'Ablesungen', prev_compat:'Kompatibel', prev_yes:'Ja', prev_no:'Nein \u2013 Pflichtfelder fehlen',
+    log_all_levels:'Alle Level', log_all_cats:'Alle Kategorien', log_search_ph:'Suche\u2026',
+    log_clear:'Leeren', log_export:'Export', log_auto_scroll:'Auto-Scroll', log_live:'Live',
+    log_empty:'Keine Log-Eintr\u00E4ge vorhanden.', new_entries:'Neue Eintr\u00E4ge',
+    sys_stats:'Statistiken', sys_readings_total:'Ablesungen gesamt', sys_uptime:'Uptime',
+    sys_nodes_online:'Nodes online', sys_nodes_total:'Nodes gesamt',
+    sys_version:'Adapter-Version', sys_installed:'Installiert', sys_latest:'Aktuell (GitHub)',
+    sys_status:'Status', sys_check:'Auf Updates pr\u00FCfen', sys_waiting:'Bitte warten\u2026',
+    sys_not_checked:'Noch nicht gepr\u00FCft', sys_no_release:'Noch kein Release',
+    sys_update_avail:'Update verf\u00FCgbar', sys_up_to_date:'Aktuell',
+    sys_github_err:'GitHub nicht erreichbar', sys_no_github_release:'Kein GitHub-Release vorhanden',
+    sys_net_err:'Netzwerkfehler', sys_info:'Adapter-Info', sys_adapter:'Adapter',
+    sys_port:'Port', sys_repo:'Repository',
+    sys_cmds:'Update-Befehle',
+    sys_cmds_desc:'Adapter aktualisieren \u2014 Befehle in der ioBroker-Konsole ausf\u00FChren:',
+    sys_tip:'Tipp: Alle drei Befehle nacheinander ausf\u00FChren \u2014 warten bis jeder abgeschlossen ist.',
+    copy:'Kopieren',
+    login_title:'Anmelden',
+    login_desc:'Zugangsdaten f\u00FCr schreibende Aktionen (Z\u00E4hler zuweisen, Import).',
+    login_user:'Benutzername', login_pass:'Passwort', login_submit:'Anmelden',
+    login_missing_user:'Benutzername fehlt', login_wrong:'Falsche Zugangsdaten',
+    login_conn_err:'Verbindungsfehler', login_expired:'Sitzung abgelaufen \u2013 bitte neu anmelden',
+    invalid_json:'Ung\u00FCltige JSON-Datei', network_err:'Netzwerkfehler'
   },
   en: {
     readings:'Readings', nodes:'Nodes', uptime:'Uptime', live:'Live', disconnected:'Disconnected',
     tab_data:'Data', tab_nodes:'Nodes', tab_import:'Import', tab_logs:'Logs', tab_system:'System',
     no_data:'No readings received yet.<br>Start a sync in the MeterMaster app or upload a backup.',
+    no_nodes:'No ESP32 nodes registered yet.<br>When a MeterMaster node starts and sends its heartbeat, it will appear here automatically.',
     history:'History', since_last:'since last reading', days:'days', chart_btn:'Chart', csv_btn:'CSV',
     chart_readings:'Meter reading', chart_monthly:'Monthly consumption', chart_period_all:'All',
     chart_yearly:'Per year', chart_yearly_proj:'Projected', chart_per_year:'/yr',
     chart_yearly_hint:'based on {days} {daysLabel} ({delta} {unit})',
     chart_no_data:'Not enough data for a chart (at least 2 readings required).',
     chart_close:'Close', error:'Error', consume:'Consumption',
-    ago_just:'just now', ago_sec:'{s}s ago', ago_min:'{m}min ago'
+    ago_just:'just now', ago_sec:'{s}s ago', ago_min:'{m}min ago',
+    nodes_title:'Registered ESP32 Nodes', nodes_total:'Total:', nodes_online:'Online:', nodes_refresh:'Refresh',
+    th_status:'Status', th_name:'Name', th_ip:'IP address', th_fw:'FW version', th_last_seen:'Last seen',
+    th_assign:'Assign meter', th_led:'LED', node_online:'Online', node_offline:'Offline',
+    no_meter:'\u2014 No meter assigned \u2014', save:'Save', saved:'Saved',
+    led_on:'On', led_off:'Off', led_on_title:'LED on', led_off_title:'LED off',
+    import_title:'Import app backup',
+    import_desc:'Import a backup export from the MeterMaster app directly into the adapter. All readings are stored with their original timestamps \u2014 ideal for initial setup or importing historical data.',
+    import_house_label:'House name (ioBroker path):', import_house_ph:'e.g. MyHouse',
+    import_drop:'Drop JSON file here or click to select',
+    import_preview:'Preview', import_btn:'Import', import_reset:'Reset', import_importing:'Importing\u2026',
+    prev_file:'File', prev_schema:'Schema', prev_apts:'Apartments', prev_meters:'Meters',
+    prev_readings:'Readings', prev_compat:'Compatible', prev_yes:'Yes', prev_no:'No \u2013 required fields missing',
+    log_all_levels:'All levels', log_all_cats:'All categories', log_search_ph:'Search\u2026',
+    log_clear:'Clear', log_export:'Export', log_auto_scroll:'Auto-scroll', log_live:'Live',
+    log_empty:'No log entries yet.', new_entries:'New entries',
+    sys_stats:'Statistics', sys_readings_total:'Total readings', sys_uptime:'Uptime',
+    sys_nodes_online:'Nodes online', sys_nodes_total:'Total nodes',
+    sys_version:'Adapter version', sys_installed:'Installed', sys_latest:'Latest (GitHub)',
+    sys_status:'Status', sys_check:'Check for updates', sys_waiting:'Please wait\u2026',
+    sys_not_checked:'Not checked yet', sys_no_release:'No release yet',
+    sys_update_avail:'Update available', sys_up_to_date:'Up to date',
+    sys_github_err:'GitHub unreachable', sys_no_github_release:'No GitHub release available',
+    sys_net_err:'Network error', sys_info:'Adapter info', sys_adapter:'Adapter',
+    sys_port:'Port', sys_repo:'Repository',
+    sys_cmds:'Update commands',
+    sys_cmds_desc:'Update the adapter \u2014 run these commands in the ioBroker console:',
+    sys_tip:'Tip: Run all three commands in sequence \u2014 wait for each to finish.',
+    copy:'Copy',
+    login_title:'Sign in',
+    login_desc:'Credentials for write actions (assign meter, import).',
+    login_user:'Username', login_pass:'Password', login_submit:'Sign in',
+    login_missing_user:'Username required', login_wrong:'Invalid credentials',
+    login_conn_err:'Connection error', login_expired:'Session expired \u2013 please sign in again',
+    invalid_json:'Invalid JSON file', network_err:'Network error'
   }
 };
 
-let currentLang = 'de';
+let currentLang = 'en';
 try {
   const saved = localStorage.getItem('mm-lang');
   currentLang = saved || (navigator.language && navigator.language.startsWith('de') ? 'de' : 'en');
-} catch { currentLang = 'de'; }
+} catch { currentLang = 'en'; }
 
 function t(key, vars) {
-  let s = (I18N[currentLang] && I18N[currentLang][key]) || (I18N.de[key]) || key;
+  let s = (I18N[currentLang] && I18N[currentLang][key]) || (I18N.en[key]) || key;
   if (vars) Object.keys(vars).forEach(k => { s = s.replace('{'+k+'}', vars[k]); });
   return s;
 }
@@ -1663,9 +1734,59 @@ function applyI18n() {
   const ls = document.getElementById('lang-select');
   if (ls) ls.value = currentLang;
   const set = (id, key) => { const el = document.getElementById(id); if (el) el.textContent = t(key); };
+  const setHtml = (id, key) => { const el = document.getElementById(id); if (el) el.innerHTML = t(key); };
+  const setPh = (id, key) => { const el = document.getElementById(id); if (el) el.placeholder = t(key); };
   set('lbl-rx', 'readings');
   set('lbl-nodes', 'nodes');
   set('lbl-up', 'uptime');
+  set('lbl-nd-total', 'nodes_total');
+  set('lbl-nd-online', 'nodes_online');
+  setHtml('no-data-msg', 'no_data');
+  setHtml('no-nodes-msg', 'no_nodes');
+  set('nodes-title', 'nodes_title');
+  set('nodes-refresh-btn', 'nodes_refresh');
+  set('import-title', 'import_title');
+  set('import-desc', 'import_desc');
+  set('import-house-label', 'import_house_label');
+  setPh('imp-house', 'import_house_ph');
+  set('import-drop-text', 'import_drop');
+  set('import-preview-title', 'import_preview');
+  set('imp-btn', 'import_btn');
+  set('import-reset-btn', 'import_reset');
+  set('fl-all', 'log_all_levels');
+  set('fc-all', 'log_all_cats');
+  setPh('ft', 'log_search_ph');
+  set('log-clear-btn', 'log_clear');
+  set('log-export-btn', 'log_export');
+  set('lbl-auto-scroll', 'log_auto_scroll');
+  set('lbl-live', 'log_live');
+  set('log-empty', 'log_empty');
+  set('ni', 'new_entries');
+  set('sys-stats-title', 'sys_stats');
+  set('sys-rx-label', 'sys_readings_total');
+  set('sys-up-label', 'sys_uptime');
+  set('sys-online-label', 'sys_nodes_online');
+  set('sys-total-label', 'sys_nodes_total');
+  set('sys-version-title', 'sys_version');
+  set('sys-lbl-installed', 'sys_installed');
+  set('sys-lbl-latest', 'sys_latest');
+  set('sys-lbl-status', 'sys_status');
+  set('sv-status-text', 'sys_not_checked');
+  set('sv-check-btn', 'sys_check');
+  set('sv-spin', 'sys_waiting');
+  set('sys-info-title', 'sys_info');
+  set('sys-lbl-adapter', 'sys_adapter');
+  set('sys-lbl-port', 'sys_port');
+  set('sys-lbl-repo', 'sys_repo');
+  set('sys-cmds-title', 'sys_cmds');
+  set('sys-cmds-desc', 'sys_cmds_desc');
+  set('sys-cmds-tip', 'sys_tip');
+  document.querySelectorAll('.cmd-copy').forEach(btn => { btn.title = t('copy'); });
+  set('login-title', 'login_title');
+  set('login-desc', 'login_desc');
+  set('login-user-label', 'login_user');
+  set('login-pass-label', 'login_pass');
+  set('login-submit-btn', 'login_submit');
   const tabs = { 'tab-data':'tab_data', 'tab-nodes':'tab_nodes', 'tab-import':'tab_import', 'tab-logs':'tab_logs', 'tab-system':'tab_system' };
   Object.keys(tabs).forEach(id => {
     const el = document.getElementById(id);
@@ -1690,6 +1811,8 @@ function setLang(lang) {
   applyI18n();
   fetchData();
   fetchStats();
+  const nodesPage = document.getElementById('page-nodes');
+  if (nodesPage && nodesPage.classList.contains('active')) fetchNodes();
 }
 
 let dataCacheList = [];
@@ -2085,11 +2208,11 @@ window.fetchNodes = async function fetchNodes() {
     const elTot = document.getElementById('nd-total');  if (elTot) elTot.textContent  = total;
     const elOn  = document.getElementById('nd-online'); if (elOn)  elOn.textContent   = online;
     if (!total) {
-      con.innerHTML = '<div class="empty-state"><div class="ico">\uD83D\uDCE1</div><p>Noch keine ESP32 Nodes registriert.<br>Wenn ein MeterMaster Node startet, erscheint er automatisch hier.</p></div>';
+      con.innerHTML = '<div class="empty-state"><div class="ico">\uD83D\uDCE1</div><p>' + t('no_nodes') + '</p></div>';
       return;
     }
     const buildOptions = (currentSid) => {
-      let opts = '<option value="">\u2014 Kein Z\u00E4hler zugewiesen \u2014</option>';
+      let opts = '<option value="">' + esc(t('no_meter')) + '</option>';
       for (const m of discover) {
         const lbl = m.house + ' \u203A ' + m.apartment + ' \u203A ' + m.meter + (m.latest !== undefined ? '  (' + m.latest + ' ' + esc(m.unit) + ')' : '');
         opts += '<option value="'+esc(m.stateId)+'"'+(m.stateId===currentSid?' selected':'')+'>'+esc(lbl)+'</option>';
@@ -2100,13 +2223,13 @@ window.fetchNodes = async function fetchNodes() {
     html += '<table style="width:100%;border-collapse:collapse;font-size:.85em;">';
     html += '<thead><tr style="text-align:left;">';
     const th = (t) => '<th style="padding:10px 12px;color:var(--text-dim);font-size:.8em;text-transform:uppercase;letter-spacing:.6px;border-bottom:2px solid var(--border);background:var(--bg-surface);">'+t+'</th>';
-    html += th('Status')+th('Name')+th('IP-Adresse')+th('FW-Version')+th('Zuletzt gesehen')+th('Z\u00E4hler zuweisen')+th('LED');
+    html += th(t('th_status'))+th(t('th_name'))+th(t('th_ip'))+th(t('th_fw'))+th(t('th_last_seen'))+th(t('th_assign'))+th(t('th_led'));
     html += '</tr></thead><tbody>';
     for (const n of nodes) {
       let currentSid = '';
       try { currentSid = JSON.parse(n.config||'{}').sid || ''; } catch {}
-      const onBadge  = '<span style="display:inline-flex;align-items:center;gap:5px;font-size:.8em;font-weight:700;padding:2px 9px;border-radius:20px;background:rgba(76,175,80,.15);color:#A5D6A7;border:1px solid rgba(76,175,80,.3);"><span style="width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block;box-shadow:0 0 4px var(--accent);"></span>Online</span>';
-      const offBadge = '<span style="display:inline-flex;align-items:center;gap:5px;font-size:.8em;font-weight:700;padding:2px 9px;border-radius:20px;background:rgba(244,67,54,.12);color:#EF9A9A;border:1px solid rgba(244,67,54,.3);"><span style="width:7px;height:7px;border-radius:50%;background:var(--danger);display:inline-block;"></span>Offline</span>';
+      const onBadge  = '<span style="display:inline-flex;align-items:center;gap:5px;font-size:.8em;font-weight:700;padding:2px 9px;border-radius:20px;background:rgba(76,175,80,.15);color:#A5D6A7;border:1px solid rgba(76,175,80,.3);"><span style="width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block;box-shadow:0 0 4px var(--accent);"></span>'+esc(t('node_online'))+'</span>';
+      const offBadge = '<span style="display:inline-flex;align-items:center;gap:5px;font-size:.8em;font-weight:700;padding:2px 9px;border-radius:20px;background:rgba(244,67,54,.12);color:#EF9A9A;border:1px solid rgba(244,67,54,.3);"><span style="width:7px;height:7px;border-radius:50%;background:var(--danger);display:inline-block;"></span>'+esc(t('node_offline'))+'</span>';
       const badge    = n.online ? onBadge : offBadge;
       const ackHint  = n.configAck ? '<div style="font-size:.75em;color:var(--text-muted);margin-top:3px;">\u2713 Ack</div>' : '';
       const ipCell   = n.ip ? '<a href="http://'+esc(n.ip)+'" target="_blank" style="color:var(--primary);text-decoration:none;font-family:Consolas,monospace;font-size:.9em;">'+esc(n.ip)+'</a>' : '\u2013';
@@ -2117,11 +2240,11 @@ window.fetchNodes = async function fetchNodes() {
       html += td(ipCell);
       html += td('<span style="background:var(--bg-surface3);color:var(--secondary);font-family:Consolas,monospace;font-size:.82em;padding:2px 8px;border-radius:6px;">'+esc(n.version||'\u2013')+'</span>');
       html += td(esc(fmtAgo(n.lastSeen)), 'color:var(--text-dim);font-size:.82em;');
-      html += td('<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><select id="sel-'+esc(n.mac)+'" style="background:var(--bg-surface2);border:1px solid var(--border-light);color:var(--text);padding:6px 10px;border-radius:7px;font-size:.82em;max-width:300px;min-width:180px;outline:none;">'+buildOptions(currentSid)+'</select><button  id="sbtn-'+esc(n.mac)+'" style="background:var(--primary);color:#fff;border:none;padding:6px 14px;border-radius:7px;cursor:pointer;font-size:.82em;font-weight:600;white-space:nowrap;">\uD83D\uDCBE Speichern</button><span id="smsg-'+esc(n.mac)+'"></span></div>'+ackHint);
-      // LED-Spalte
+      html += td('<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><select id="sel-'+esc(n.mac)+'" style="background:var(--bg-surface2);border:1px solid var(--border-light);color:var(--text);padding:6px 10px;border-radius:7px;font-size:.82em;max-width:300px;min-width:180px;outline:none;">'+buildOptions(currentSid)+'</select><button  id="sbtn-'+esc(n.mac)+'" style="background:var(--primary);color:#fff;border:none;padding:6px 14px;border-radius:7px;cursor:pointer;font-size:.82em;font-weight:600;white-space:nowrap;">\uD83D\uDCBE '+esc(t('save'))+'</button><span id="smsg-'+esc(n.mac)+'"></span></div>'+ackHint);
+      // LED column
       html += td('<div style="display:flex;flex-direction:column;gap:5px;align-items:center;">'
-        +'<button class="ledBtn" data-mac="'+esc(n.mac)+'" data-led="1" title="LED ein" style="background:rgba(239,68,68,.2);color:#F87171;border:1px solid rgba(239,68,68,.4);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:.8em;white-space:nowrap;">\uD83D\uDD34 Ein</button>'
-        +'<button class="ledBtn" data-mac="'+esc(n.mac)+'" data-led="0" title="LED aus" style="background:var(--bg-surface2);color:var(--text-dim);border:1px solid var(--border);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:.8em;white-space:nowrap;">\u26AB Aus</button>'
+        +'<button class="ledBtn" data-mac="'+esc(n.mac)+'" data-led="1" title="'+esc(t('led_on_title'))+'" style="background:rgba(239,68,68,.2);color:#F87171;border:1px solid rgba(239,68,68,.4);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:.8em;white-space:nowrap;">\uD83D\uDD34 '+esc(t('led_on'))+'</button>'
+        +'<button class="ledBtn" data-mac="'+esc(n.mac)+'" data-led="0" title="'+esc(t('led_off_title'))+'" style="background:var(--bg-surface2);color:var(--text-dim);border:1px solid var(--border);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:.8em;white-space:nowrap;">\u26AB '+esc(t('led_off'))+'</button>'
         +'<span id="ledmsg-'+esc(n.mac)+'" style="font-size:.75em;min-height:14px;"></span>'
         +'</div>');
       html += '</tr>';
@@ -2129,7 +2252,7 @@ window.fetchNodes = async function fetchNodes() {
     html += '</tbody></table></div>';
     con.innerHTML = html;
   } catch(e) {
-    con.innerHTML = '<div class="empty-state"><div class="ico">\u26A0</div><p>Fehler: '+esc(e.message)+'</p></div>';
+    con.innerHTML = '<div class="empty-state"><div class="ico">\u26A0</div><p>'+t('error')+': '+esc(e.message)+'</p></div>';
   }
 }
 
@@ -2149,10 +2272,10 @@ window.saveNodeConfig = async function saveNodeConfig(mac) {
     if (!r) { btn.disabled = false; return; }
     const d = await r.json();
     if (d.ok) {
-      msg.innerHTML = '<span style="color:var(--accent);font-size:.82em;">\u2713 Gespeichert</span>';
+      msg.innerHTML = '<span style="color:var(--accent);font-size:.82em;">\u2713 '+esc(t('saved'))+'</span>';
       window.setTimeout(() => { msg.textContent = ''; }, 3000);
     } else {
-      msg.innerHTML = '<span style="color:var(--danger);font-size:.82em;">\u2717 '+esc(d.error||'Fehler')+'</span>';
+      msg.innerHTML = '<span style="color:var(--danger);font-size:.82em;">\u2717 '+esc(d.error||t('error'))+'</span>';
     }
   } catch(e) {
     msg.innerHTML = '<span style="color:var(--danger);font-size:.82em;">\u2717 '+esc(e.message)+'</span>';
@@ -2191,7 +2314,7 @@ function loadFile(file) {
   const r = new FileReader();
   r.onload = e => {
     try { importData = JSON.parse(e.target.result); showPreview(importData, file.name); }
-    catch { showResult('err', '\u274C Ung\u00FCltige JSON-Datei'); }
+    catch { showResult('err', '\u274C ' + t('invalid_json')); }
   };
   r.readAsText(file);
 }
@@ -2199,12 +2322,12 @@ function loadFile(file) {
 function showPreview(d, fname) {
   const valid = !!(d.Apartments && d.Meters && d.Readings);
   document.getElementById('preview-content').innerHTML =
-    prow('Datei',      esc(fname)) +
-    prow('Schema',     d.SchemaVersion||'?') +
-    prow('Wohnungen',  (d.Apartments||[]).length) +
-    prow('Z\u00E4hler',     (d.Meters||[]).length) +
-    prow('Ablesungen', (d.Readings||[]).length) +
-    prow('Kompatibel', valid ? '\u2705 Ja' : '\u274C Nein \u2013 Pflichtfelder fehlen');
+    prow(t('prev_file'),      esc(fname)) +
+    prow(t('prev_schema'),     d.SchemaVersion||'?') +
+    prow(t('prev_apts'),  (d.Apartments||[]).length) +
+    prow(t('prev_meters'),     (d.Meters||[]).length) +
+    prow(t('prev_readings'), (d.Readings||[]).length) +
+    prow(t('prev_compat'), valid ? '\u2705 ' + t('prev_yes') : '\u274C ' + t('prev_no'));
   document.getElementById('preview-box').style.display = 'block';
   document.getElementById('imp-btn').disabled = !valid;
 }
@@ -2212,20 +2335,20 @@ const prow = (l,v) => '<div class="preview-row"><span>'+l+'</span><b>'+v+'</b></
 
 window.doImport = async function doImport() {
   if (!importData) return;
-  const house = document.getElementById('imp-house').value.trim() || 'MeinHaus';
+  const house = document.getElementById('imp-house').value.trim() || 'MyHouse';
   const btn   = document.getElementById('imp-btn');
-  btn.disabled = true; btn.textContent = '\u23F3 Importiere\u2026';
+  btn.disabled = true; btn.textContent = '\u23F3 ' + t('import_importing');
   try {
     const r = await authFetch('/api/import', {
       method: 'POST',
       body: JSON.stringify({...importData, HouseName: house})
     });
-    if (!r) { btn.disabled = false; btn.textContent = '⬆ Importieren'; return; }
+    if (!r) { btn.disabled = false; btn.textContent = '\u2B06 ' + t('import_btn'); return; }
     const d = await r.json();
     if (d.ok) { showResult('ok',   '\u2705 '+d.summary); fetchData(); fetchStats(); }
     else       { showResult('warn','\u26A0 '+d.summary+(d.errors.length ? '<br>'+d.errors.slice(0,5).map(esc).join('<br>') : '')); }
-  } catch(e) { showResult('err', '\u274C Netzwerkfehler: '+esc(e.message)); }
-  finally { btn.disabled = false; btn.textContent = '\u2B06 Importieren'; }
+  } catch(e) { showResult('err', '\u274C ' + t('network_err') + ': '+esc(e.message)); }
+  finally { btn.disabled = false; btn.textContent = '\u2B06 ' + t('import_btn'); }
 }
 function showResult(type, msg) {
   const rb = document.getElementById('imp-result');
@@ -2324,54 +2447,25 @@ function startLive() {
 async function checkVersion() {
   const btn   = document.getElementById('sv-check-btn');
   const spin  = document.getElementById('sv-spin');
-  const updBtn = document.getElementById('sv-upd-btn');
   btn.disabled = true; spin.style.display = 'inline';
   try {
     const d = await fetch('/api/version').then(r => r.json());
     document.getElementById('sv-cur').textContent = d.current || '\u2013';
-    document.getElementById('sv-lat').textContent = d.latest  || (d.error ? '(Fehler)' : 'Noch kein Release');
+    document.getElementById('sv-lat').textContent = d.latest  || (d.error ? '(' + t('error') + ')' : t('sys_no_release'));
     const st = document.getElementById('sv-status');
     if (d.error) {
-      st.innerHTML = '<span class="badge-err">\u26A0 GitHub nicht erreichbar</span>';
-      updBtn.style.display = 'none';
+      st.innerHTML = '<span class="badge-err">\u26A0 ' + t('sys_github_err') + '</span>';
     } else if (!d.latest) {
-      st.innerHTML = '<span class="badge-warn">\u2139 Kein GitHub-Release vorhanden</span>';
-      updBtn.style.display = 'none';
+      st.innerHTML = '<span class="badge-warn">\u2139 ' + t('sys_no_github_release') + '</span>';
     } else if (d.updateAvailable) {
-      st.innerHTML = '<span class="badge-new">\uD83C\uDD95 Update verf\u00FCgbar</span>';
-      updBtn.style.display = '';
+      st.innerHTML = '<span class="badge-new">\uD83C\uDD95 ' + t('sys_update_avail') + '</span>';
     } else {
-      st.innerHTML = '<span class="badge-ok">\u2713 Aktuell</span>';
-      updBtn.style.display = 'none';
+      st.innerHTML = '<span class="badge-ok">\u2713 ' + t('sys_up_to_date') + '</span>';
     }
   } catch(e) {
-    document.getElementById('sv-status').innerHTML = '<span class="badge-err">\u26A0 Netzwerkfehler</span>';
+    document.getElementById('sv-status').innerHTML = '<span class="badge-err">\u26A0 ' + t('sys_net_err') + '</span>';
   }
   btn.disabled = false; spin.style.display = 'none';
-}
-
-async function doUpdate() {
-  const btn    = document.getElementById('sv-upd-btn');
-  const spin   = document.getElementById('sv-spin');
-  const outBox = document.getElementById('sv-out');
-  if (!confirm('Update installieren und Adapter neu starten?')) return;
-  btn.style.display = 'none'; spin.style.display = 'inline';
-  outBox.style.display = 'block'; outBox.textContent = '\u23F3 Update l\u00E4uft\u2026';
-  try {
-    const r = await fetch('/api/update', { method: 'POST' });
-    const d = await r.json();
-    if (d.ok) {
-      outBox.textContent = '\u2705 Update erfolgreich.' + String.fromCharCode(10) + 'Adapter wird neu gestartet\u2026' + String.fromCharCode(10,10) + (d.output||'');
-      document.getElementById('sv-status').innerHTML = '<span class="badge-ok">\u2713 Neu gestartet</span>';
-      window.setTimeout(() => { outBox.textContent += String.fromCharCode(10) + '\u27F3 Seite wird neu geladen\u2026'; location.reload(); }, 8000);
-    } else {
-      outBox.textContent = '\u274C Fehler:' + String.fromCharCode(10) + (d.error||'') + String.fromCharCode(10,10) + (d.output||'');
-      btn.style.display = ''; spin.style.display = 'none';
-    }
-  } catch(e) {
-    outBox.textContent = '\u274C Netzwerkfehler: ' + e.message;
-    btn.style.display = ''; spin.style.display = 'none';
-  }
 }
 
 // \u2500\u2500 Init \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
@@ -2416,10 +2510,8 @@ function initTabs() {
   // System-Tab Buttons
   const chkBtn = document.getElementById('sv-check-btn');
   if (chkBtn) chkBtn.addEventListener('click', checkVersion);
-  const updBtn = document.getElementById('sv-upd-btn');
-  if (updBtn) updBtn.addEventListener('click', doUpdate);
 
-  // Verlauf-Toggle via Event Delegation (kein onclick-Attribut nötig)
+  // History toggle via event delegation
   document.addEventListener('click', e => {
     const btn = e.target.closest('.mc-hist-toggle');
     if (btn && btn.dataset.hist) toggleHist(btn.dataset.hist);

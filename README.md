@@ -2,7 +2,7 @@
 
 [![MeterMaster Banner](https://github.com/MPunktBPunkt/ioBroker.metermaster/raw/main/github-banner.svg)](https://github.com/MPunktBPunkt/ioBroker.metermaster)
 
-[![Version](https://img.shields.io/badge/version-0.9.3-blue.svg)](https://github.com/MPunktBPunkt/ioBroker.metermaster)
+[![Version](https://img.shields.io/badge/version-0.9.4-blue.svg)](https://github.com/MPunktBPunkt/ioBroker.metermaster)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/MPunktBPunkt/ioBroker.metermaster/blob/main/LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D22-brightgreen.svg)](https://nodejs.org)
 
@@ -120,7 +120,7 @@ http://{ioBroker-IP}:8089/
 | **Nodes** | Registered ESP32 nodes: status, IP link, firmware, meter dropdown, LED control |
 | **Import** | App backup (JSON schema 2.0) via drag & drop |
 | **Logs** | Real-time log with filter, auto-scroll, export |
-| **System** | Statistics, GitHub version check, one-click update |
+| **System** | Statistics & version check |
 
 Screenshots: see [Screenshots](#screenshots) above.
 
@@ -186,7 +186,6 @@ metermaster.0.
 | GET | `/api/nodes` | All registered ESP32 nodes |
 | GET | `/api/discover` | Known meter state IDs |
 | POST | `/api/register` | ESP32 heartbeat (no auth required) |
-| POST | `/api/update` | Start adapter update |
 
 ### With Basic Auth
 
@@ -233,8 +232,8 @@ Content-Type: application/json
 
 ## Update
 
-### Via Web UI (recommended)
-`http://IP:8089/` → **System** tab → "Check for updates" → "Install update"
+### Via Web UI
+`http://IP:8089/` → **System** tab → "Check for updates" (shows availability; install via CLI below)
 
 ### Command line
 
@@ -246,6 +245,17 @@ iobroker restart metermaster.0
 ---
 
 ## Changelog
+
+### 0.9.4
+- All adapter log messages and API JSON error responses in English
+- State common names and roles corrected (readings channel, date/text/json roles, info.firmware for nodes)
+- Web UI i18n: full DE/EN coverage, English default HTML
+- Config validation: clamped port (1024–65535), logBufferSize (50–5000), keepHistory (0–100000)
+- Removed `/api/update` endpoint and one-click Web UI update (CLI commands card retained)
+- `migrateStateRoles()` uses `getAdapterObjectsAsync` (own adapter states only)
+- Removed dead `houseName` config; import default house is `MyHouse`
+- Fixed redundant state check in stateChange handler
+- `@types/node` pinned to `^22.0.0`
 
 ### 0.9.3
 - Fix state roles for ioBroker object structure check (repochecker E1008/E1009/E1011)
