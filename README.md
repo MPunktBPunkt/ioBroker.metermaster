@@ -271,6 +271,9 @@ iobroker restart metermaster.0
 ### **WORK IN PROGRESS**
 - (ioBroker-Bot) Adapter requires admin >= 7.8.23 now.
 
+### 0.9.11
+- Add author email to `package.json`, `io-package.json`, README, and LICENSE (repo checker E4048/S4050/S4051)
+
 ### 0.9.10
 - Repo checker (E2004/E6029): remove unpublished `0.9.5` from `common.news`
 - Trim `common.news` to 7 entries
@@ -342,6 +345,6 @@ See [io-package.json](io-package.json) `common.news` for full history. Older ent
 
 MIT License
 
-Copyright (c) 2026 MPunktBPunkt
+Copyright (c) 2026 MPunktBPunkt <martin@bchmnn.de>
 
 See [LICENSE](LICENSE) for the full license text.
