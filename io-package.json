@@ -1,8 +1,21 @@
 {
   "common": {
     "name": "metermaster",
-    "version": "0.9.11",
+    "version": "0.9.12",
     "news": {
+      "0.9.12": {
+        "en": "Repo checker: upgrade @iobroker/testing to 6.2.2; CI tests on Node.js 26; trim common.news to 7 entries",
+        "de": "Repo-Checker: @iobroker/testing auf 6.2.2; CI-Tests mit Node.js 26; common.news auf 7 Eintr\u00e4ge gek\u00fcrzt",
+        "ru": "Repo checker: @iobroker/testing 6.2.2; CI-Tests Node.js 26; common.news auf 7 Eintr\u00e4ge",
+        "pt": "Repo checker: @iobroker/testing 6.2.2; testes CI Node.js 26; common.news reduzido a 7 entradas",
+        "nl": "Repo-checker: @iobroker/testing 6.2.2; CI-tests Node.js 26; common.news ingekort tot 7 items",
+        "fr": "Repo checker : @iobroker/testing 6.2.2 ; tests CI Node.js 26 ; common.news r\u00e9duit \u00e0 7 entr\u00e9es",
+        "it": "Repo checker: @iobroker/testing 6.2.2; test CI Node.js 26; common.news ridotto a 7 voci",
+        "es": "Repo checker: @iobroker/testing 6.2.2; pruebas CI Node.js 26; common.news recortado a 7 entradas",
+        "pl": "Repo checker: @iobroker/testing 6.2.2; testy CI Node.js 26; common.news skr\u00f3cone do 7 wpis\u00f3w",
+        "uk": "Repo checker: @iobroker/testing 6.2.2; CI-\u0442\u0435\u0441\u0442\u0438 Node.js 26; common.news \u0441\u043a\u043e\u0440\u043e\u0447\u0435\u043d\u043e \u0434\u043e 7 \u0437\u0430\u043f\u0438\u0441\u0456\u0432",
+        "zh-cn": "\u4ed3\u5e93\u68c0\u67e5\u5668\uff1a\u5347\u7ea7 @iobroker/testing \u81f3 6.2.2\uff1bCI \u6d4b\u8bd5 Node.js 26\uff1bcommon.news \u7f29\u81f3 7 \u6761"
+      },
       "0.9.11": {
         "en": "Add author email to package metadata (repo checker E4048/S4050/S4051)",
         "de": "Autor-E-Mail in Paket-Metadaten erg\u00e4nzt (Repo-Checker E4048/S4050/S4051)",
@@ -80,32 +93,6 @@
         "pl": "Przypisywanie node przez chipy na kartach licznik\u00f3w",
         "uk": "\u041f\u0440\u0438\u0437\u043d\u0430\u0447\u0435\u043d\u043d\u044f node \u0447\u0435\u0440\u0435\u0437 \u0447\u0456\u043f\u0438 \u043d\u0430 \u043a\u0430\u0440\u0442\u043a\u0430\u0445 \u043b\u0456\u0447\u0438\u043b\u044c\u043d\u0438\u043a\u0456\u0432",
         "zh-cn": "\u5728\u6570\u636e\u9875\u8ba1\u91cf\u8868\u5361\u7247\u4e0a\u901a\u8fc7\u82af\u7247\u5206\u914d\u663e\u793a\u8282\u70b9"
-      },
-      "0.9.4": {
-        "en": "Review fixes: English logs/states/API errors, Web UI i18n, config validation, removed /api/update",
-        "de": "Review-Fixes: Englische Logs/States/API-Fehler, Web-UI-i18n, Config-Validierung, /api/update entfernt",
-        "ru": "\u0418\u0441\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u044f review: \u0430\u043d\u0433\u043b\u0438\u0439\u0441\u043a\u0438\u0435 \u043b\u043e\u0433\u0438/states/API, i18n Web UI, \u0432\u0430\u043b\u0438\u0434\u0430\u0446\u0438\u044f config, \u0443\u0434\u0430\u043b\u0451\u043d /api/update",
-        "pt": "Corre\u00e7\u00f5es de review: logs/states/erros API em ingl\u00eas, i18n Web UI, valida\u00e7\u00e3o config, removido /api/update",
-        "nl": "Review-fixes: Engelse logs/states/API-fouten, Web UI i18n, config-validatie, /api/update verwijderd",
-        "fr": "Corrections review : logs/states/erreurs API en anglais, i18n Web UI, validation config, /api/update supprim\u00e9",
-        "it": "Correzioni review: log/states/errori API in inglese, i18n Web UI, validazione config, rimosso /api/update",
-        "es": "Correcciones de review: logs/states/errores API en ingl\u00e9s, i18n Web UI, validaci\u00f3n config, eliminado /api/update",
-        "pl": "Poprawki review: angielskie logi/states/b\u0142\u0119dy API, i18n Web UI, walidacja config, usuni\u0119to /api/update",
-        "uk": "\u0412\u0438\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u043d\u044f review: \u0430\u043d\u0433\u043b\u0456\u0439\u0441\u044c\u043a\u0456 \u043b\u043e\u0433\u0438/states/API, i18n Web UI, \u0432\u0430\u043b\u0456\u0434\u0430\u0446\u0456\u044f config, \u0432\u0438\u0434\u0430\u043b\u0435\u043d\u043e /api/update",
-        "zh-cn": "\u5ba1\u67e5\u4fee\u590d\uff1a\u82f1\u6587\u65e5\u5fd7/states/API \u9519\u8bef\u3001Web UI \u56fd\u9645\u5316\u3001\u914d\u7f6e\u9a8c\u8bc1\u3001\u79fb\u9664 /api/update"
-      },
-      "0.9.3": {
-        "en": "Fix state roles for ioBroker object structure check (date, text, json, info.firmware)",
-        "de": "State-Rollen f\u00fcr ioBroker-Objektstruktur-Pr\u00fcfung korrigiert (date, text, json, info.firmware)",
-        "ru": "\u0418\u0441\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u044b \u0440\u043e\u043b\u0438 states \u0434\u043b\u044f \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0438 \u0441\u0442\u0440\u0443\u043a\u0442\u0443\u0440\u044b \u043e\u0431\u044a\u0435\u043a\u0442\u043e\u0432 ioBroker",
-        "pt": "Corrigidas roles de states para verifica\u00e7\u00e3o da estrutura de objetos ioBroker",
-        "nl": "State-rollen gecorrigeerd voor ioBroker objectstructuurcontrole",
-        "fr": "R\u00f4les des states corrig\u00e9s pour la v\u00e9rification de structure d'objets ioBroker",
-        "it": "Corrette le role degli state per il controllo struttura oggetti ioBroker",
-        "es": "Corregidos roles de states para verificaci\u00f3n de estructura de objetos ioBroker",
-        "pl": "Poprawiono role states dla kontroli struktury obiekt\u00f3w ioBroker",
-        "uk": "\u0412\u0438\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u043e \u0440\u043e\u043b\u0456 states \u0434\u043b\u044f \u043f\u0435\u0440\u0435\u0432\u0456\u0440\u043a\u0438 \u0441\u0442\u0440\u0443\u043a\u0442\u0443\u0440\u0438 \u043e\u0431'\u0454\u043a\u0442\u0456\u0432 ioBroker",
-        "zh-cn": "\u4fee\u590d state \u89d2\u8272\u4ee5\u901a\u8fc7 ioBroker \u5bf9\u8c61\u7ed3\u6784\u68c0\u67e5"
       }
     },
     "titleLang": {
