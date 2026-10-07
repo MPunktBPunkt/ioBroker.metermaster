@@ -2493,7 +2493,7 @@ function openPrintWindow(title, bodyHtml) {
     window.alert(t('error'));
     return;
   }
-  setTimeout(() => URL.revokeObjectURL(url), 60000);
+  window.setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
 window.printChartView = function printChartView() {
